@@ -6,16 +6,18 @@
  a persistent library of tiles, handles purchases during a game, and allows
  pieces to be created, colored, edited, or deleted. When a tile is bought its
  score metrics at that moment are stored so the purchased list can show
- historical scores. Table evaluations display the same scoring formulas used at
- purchase time—gross score is twice the area plus remaining payday button income,
- net score subtracts the cost, and efficiency metrics divide by time penalty and
- area as applicable.
+ historical scores. Purchases are tracked per player (yellow and green) so
+ individual scores can be calculated. Table evaluations display the same scoring
+ formulas used at purchase time—gross score is twice the area plus remaining
+ payday button income, net score subtracts the cost, and efficiency metrics
+ divide by time penalty and area as applicable.
 
  Structure:
  - State management for library, available, and purchased tiles
  - Grid rendering utilities and stats calculations
  - Event listeners for CRUD actions and game flow
- - Column sorting for the pieces table
+  - Column sorting for the pieces table
+  - Per-player purchase buttons (yellow and green)
 */
 
 const AGE_COUNT = 9; // number of paydays/ages in the game
@@ -31,6 +33,8 @@ purchasedPieces.forEach(p => {
   if (!p.color) p.color = '#4caf50';
   // normalize legacy data to the new 1–9 age scale
   if (p.purchaseAge === undefined || p.purchaseAge < 1) p.purchaseAge = 1;
+  // legacy records may not track which player purchased the tile
+  if (!p.player) p.player = 'unknown';
   // legacy records may not have stored purchase-time metrics; compute them
   const stats = computeScoreStats(p, p.purchaseAge);
   if (p.purchaseGross === undefined) p.purchaseGross = stats.grossScore;
@@ -180,6 +184,29 @@ function computeScoreStats(piece, age = currentAge) {
   return { area, grossScore, netScore, netScorePerTime, netScorePerTimePerArea };
 }
 
+// Record the purchase of a piece for the specified player
+function purchasePiece(piece, player) {
+  const index = availablePieces.findIndex(p => p.id === piece.id);
+  if (index >= 0) {
+    console.debug(`Purchasing piece ${piece.id} for ${player}`);
+    const purchaseAge = currentAge;
+    const statsAtPurchase = computeScoreStats(availablePieces[index], purchaseAge);
+    const purchasedCopy = {
+      ...availablePieces[index],
+      player,
+      purchaseAge,
+      purchaseGross: statsAtPurchase.grossScore,
+      purchaseNet: statsAtPurchase.netScore,
+      purchaseNetPerTime: statsAtPurchase.netScorePerTime,
+      purchaseNetPerTimePerArea: statsAtPurchase.netScorePerTimePerArea
+    };
+    purchasedPieces.push(purchasedCopy);
+    availablePieces.splice(index, 1);
+    savePurchased();
+    refreshTable();
+  }
+}
+
 function refreshTable() {
   piecesTableBody.innerHTML = '';
   // Create a sorted copy of pieces based on current sort state
@@ -217,31 +244,17 @@ function refreshTable() {
     tr.appendChild(nptaTd);
 
     const actionTd = document.createElement('td');
-    const buyBtn = document.createElement('button');
-    buyBtn.textContent = 'Purchase';
-    buyBtn.disabled = false;
-    buyBtn.addEventListener('click', () => {
-      const index = availablePieces.findIndex(p => p.id === piece.id);
-      if (index >= 0) {
-        console.debug('Purchasing piece', piece.id);
-        const purchaseAge = currentAge;
-        // capture the piece's score metrics at the moment of purchase
-        const statsAtPurchase = computeScoreStats(availablePieces[index], purchaseAge);
-        const purchasedCopy = {
-          ...availablePieces[index],
-          purchaseAge,
-          purchaseGross: statsAtPurchase.grossScore,
-          purchaseNet: statsAtPurchase.netScore,
-          purchaseNetPerTime: statsAtPurchase.netScorePerTime,
-          purchaseNetPerTimePerArea: statsAtPurchase.netScorePerTimePerArea
-        };
-        purchasedPieces.push(purchasedCopy);
-        availablePieces.splice(index, 1);
-        savePurchased();
-        refreshTable();
-      }
-    });
-    actionTd.appendChild(buyBtn);
+    const yellowBtn = document.createElement('button');
+    yellowBtn.textContent = 'Buy Yellow';
+    yellowBtn.classList.add('buy-yellow');
+    yellowBtn.addEventListener('click', () => purchasePiece(piece, 'yellow'));
+    actionTd.appendChild(yellowBtn);
+
+    const greenBtn = document.createElement('button');
+    greenBtn.textContent = 'Buy Green';
+    greenBtn.classList.add('buy-green');
+    greenBtn.addEventListener('click', () => purchasePiece(piece, 'green'));
+    actionTd.appendChild(greenBtn);
 
     const editBtn = document.createElement('button');
     editBtn.textContent = 'Edit';
