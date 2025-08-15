@@ -6,7 +6,7 @@
  a persistent library of tiles, handles purchases during a game, and allows
  pieces to be created, colored, edited, or deleted. Piece value is calculated
  as 2 points per occupied square plus future button income across the
- remaining ages.
+ remaining ages, minus the piece cost.
 
  Structure:
  - State management for library, available, and purchased tiles
@@ -15,16 +15,10 @@
  - Column sorting for the pieces table
 */
 
-const TOTAL_TIME = 53; // total time spaces in Patchwork
-const AGE_COUNT = 9; // number of scoring ages in the game
-const AGE_LENGTH = TOTAL_TIME / AGE_COUNT;
+const AGE_COUNT = 9; // number of paydays/ages in the game
 
-// Convert a time position on the track to a zero-based age index
-function getAgeIndex(time) {
-  return Math.min(AGE_COUNT - 1, Math.floor(time / AGE_LENGTH));
-}
-
-let currentAge = 0;
+// currentAge is 1-based representing the payday marker on the board
+let currentAge = 1;
 let nextId = parseInt(localStorage.getItem('nextId'), 10) || 1;
 let pieceLibrary = JSON.parse(localStorage.getItem('pieceLibrary') || '[]');
 let purchasedPieces = JSON.parse(localStorage.getItem('purchasedPieces') || '[]');
@@ -32,7 +26,8 @@ let purchasedPieces = JSON.parse(localStorage.getItem('purchasedPieces') || '[]'
 pieceLibrary.forEach(p => { if (!p.color) p.color = '#4caf50'; });
 purchasedPieces.forEach(p => {
   if (!p.color) p.color = '#4caf50';
-  if (p.purchaseAge === undefined) p.purchaseAge = 0;
+  // normalize legacy data to the new 1–9 age scale
+  if (p.purchaseAge === undefined || p.purchaseAge < 1) p.purchaseAge = 1;
 });
 let availablePieces = pieceLibrary.filter(p => !purchasedPieces.some(pp => pp.id === p.id));
 let editingPieceId = null;
@@ -52,6 +47,10 @@ const timeInput = document.getElementById('timeInput');
 const colorInput = document.getElementById('colorInput');
 const savePieceBtn = document.getElementById('savePiece');
 const cancelPieceBtn = document.getElementById('cancelPiece');
+
+// initialize age slider display
+ageInput.value = currentAge;
+ageDisplay.textContent = currentAge;
 
 // Track which column is sorted and direction
 let sortState = { key: null, asc: true };
@@ -162,18 +161,15 @@ function renderShape(shape, color = '#4caf50') {
 }
 
 // Calculate derived statistics for a piece given an age/time of purchase
-function computeStats(piece, ageOrTime = currentAge) {
+function computeStats(piece, age = currentAge) {
   const area = piece.shape.length;
-  // Accept either a time index or an age index
-  const ageIndex = ageOrTime > AGE_COUNT - 1 ? getAgeIndex(ageOrTime) : ageOrTime;
-  const buttonPoints = piece.buttons * (AGE_COUNT - ageIndex);
-  const totalValue = area * 2 + buttonPoints;
-  const netValue = totalValue - piece.cost;
-  const pointsPerCost = piece.cost ? netValue / piece.cost : netValue;
-  const pointsPerCostPerArea = piece.cost && area ? netValue / (piece.cost * area) : 0;
-  const remaining = TOTAL_TIME - currentAge - piece.time;
-  const valid = remaining >= 0;
-  return { area, pointsPerCost, pointsPerCostPerArea, value: netValue, valid };
+  // Remaining button income based on future paydays
+  const buttonPoints = piece.buttons * (AGE_COUNT - age);
+  const totalValue = area * 2 + buttonPoints - piece.cost;
+  const pointsPerCost = piece.cost ? totalValue / piece.cost : totalValue;
+  const pointsPerCostPerArea = piece.cost && area ? totalValue / (piece.cost * area) : 0;
+  // Without exact time tracking, assume all pieces are purchasable
+  return { area, pointsPerCost, pointsPerCostPerArea, value: totalValue, valid: true };
 }
 
 function refreshTable() {
@@ -228,7 +224,7 @@ function refreshTable() {
       const index = availablePieces.findIndex(p => p.id === piece.id);
       if (index >= 0) {
         console.debug('Purchasing piece', piece.id);
-        const purchaseAge = getAgeIndex(currentAge);
+        const purchaseAge = currentAge;
         const purchasedCopy = { ...availablePieces[index], purchaseAge };
         purchasedPieces.push(purchasedCopy);
         availablePieces.splice(index, 1);
