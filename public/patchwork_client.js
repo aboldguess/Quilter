@@ -6,9 +6,9 @@
  a persistent library of tiles, handles purchases during a game, and allows
  pieces to be created, colored, edited, or deleted. When a tile is bought its
  value metrics at that moment are stored so the purchased list can show
- historical scores. Table evaluations use a heuristic of 2 points per occupied
- square plus future button income minus cost, while purchase-time values use
- cost minus twice the area plus remaining button income.
+ historical scores. Table evaluations display the same value formula used at
+ purchase time—cost minus twice the area plus remaining button income—and also
+ compute value per time penalty and value per time penalty per area.
 
  Structure:
  - State management for library, available, and purchased tiles
@@ -31,7 +31,7 @@ purchasedPieces.forEach(p => {
   // normalize legacy data to the new 1–9 age scale
   if (p.purchaseAge === undefined || p.purchaseAge < 1) p.purchaseAge = 1;
   // legacy records may not have stored purchase-time metrics; compute them
-  const stats = computePurchaseStats(p, p.purchaseAge);
+  const stats = computeValueStats(p, p.purchaseAge);
   if (p.purchaseValue === undefined) p.purchaseValue = stats.value;
   if (p.purchaseValuePerTime === undefined) p.purchaseValuePerTime = stats.valuePerTime;
   if (p.purchaseValuePerTimePerArea === undefined) {
@@ -69,9 +69,9 @@ const sortableColumns = {
   1: 'buttons',
   2: 'cost',
   3: 'time',
-  4: 'pointsPerCost',
-  5: 'pointsPerCostPerArea',
-  6: 'value'
+  4: 'value',
+  5: 'valuePerTime',
+  6: 'valuePerTimePerArea'
 };
 
 // Update header classes to show sort direction arrows
@@ -169,26 +169,14 @@ function renderShape(shape, color = '#4caf50') {
   return container;
 }
 
-// Calculate derived statistics for a piece given an age/time of purchase
-function computeStats(piece, age = currentAge) {
-  const area = piece.shape.length;
-  // Remaining button income based on future paydays
-  const buttonPoints = piece.buttons * (AGE_COUNT - age);
-  const totalValue = area * 2 + buttonPoints - piece.cost;
-  const pointsPerCost = piece.cost ? totalValue / piece.cost : totalValue;
-  const pointsPerCostPerArea = piece.cost && area ? totalValue / (piece.cost * area) : 0;
-  // Without exact time tracking, assume all pieces are purchasable
-  return { area, pointsPerCost, pointsPerCostPerArea, value: totalValue, valid: true };
-}
-
-// Calculate purchase-time metrics used on the purchased tiles page
-function computePurchaseStats(piece, age = currentAge) {
+// Calculate current value metrics for a piece at a given age
+function computeValueStats(piece, age = currentAge) {
   const area = piece.shape.length;
   const buttonPoints = piece.buttons * (AGE_COUNT - age);
   const value = piece.cost - area * 2 + buttonPoints;
   const valuePerTime = piece.time ? value / piece.time : value;
   const valuePerTimePerArea = piece.time && area ? value / (piece.time * area) : 0;
-  return { value, valuePerTime, valuePerTimePerArea };
+  return { area, value, valuePerTime, valuePerTimePerArea };
 }
 
 function refreshTable() {
@@ -196,15 +184,15 @@ function refreshTable() {
   // Create a sorted copy of pieces based on current sort state
   const piecesToRender = availablePieces.slice().sort((a, b) => {
     if (!sortState.key) return 0;
-    const statsA = computeStats(a);
-    const statsB = computeStats(b);
+    const statsA = computeValueStats(a, currentAge);
+    const statsB = computeValueStats(b, currentAge);
     const valA = a[sortState.key] ?? statsA[sortState.key];
     const valB = b[sortState.key] ?? statsB[sortState.key];
     return sortState.asc ? valA - valB : valB - valA;
   });
   updateSortIndicators();
   piecesToRender.forEach(piece => {
-    const stats = computeStats(piece);
+    const stats = computeValueStats(piece, currentAge);
     const tr = document.createElement('tr');
 
     const shapeTd = document.createElement('td');
@@ -223,29 +211,29 @@ function refreshTable() {
     timeTd.textContent = piece.time;
     tr.appendChild(timeTd);
 
-    const pcTd = document.createElement('td');
-    pcTd.textContent = stats.pointsPerCost.toFixed(2);
-    tr.appendChild(pcTd);
-
-    const pcaTd = document.createElement('td');
-    pcaTd.textContent = stats.pointsPerCostPerArea.toFixed(2);
-    tr.appendChild(pcaTd);
-
     const valueTd = document.createElement('td');
     valueTd.textContent = stats.value;
     tr.appendChild(valueTd);
 
+    const vptTd = document.createElement('td');
+    vptTd.textContent = stats.valuePerTime.toFixed(2);
+    tr.appendChild(vptTd);
+
+    const vptaTd = document.createElement('td');
+    vptaTd.textContent = stats.valuePerTimePerArea.toFixed(2);
+    tr.appendChild(vptaTd);
+
     const actionTd = document.createElement('td');
     const buyBtn = document.createElement('button');
     buyBtn.textContent = 'Purchase';
-    buyBtn.disabled = !stats.valid;
+    buyBtn.disabled = false;
     buyBtn.addEventListener('click', () => {
       const index = availablePieces.findIndex(p => p.id === piece.id);
       if (index >= 0) {
         console.debug('Purchasing piece', piece.id);
         const purchaseAge = currentAge;
         // capture the piece's value metrics at the moment of purchase
-        const statsAtPurchase = computePurchaseStats(availablePieces[index], purchaseAge);
+        const statsAtPurchase = computeValueStats(availablePieces[index], purchaseAge);
         const purchasedCopy = {
           ...availablePieces[index],
           purchaseAge,

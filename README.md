@@ -7,7 +7,7 @@ This repository contains a mobile-friendly web application for evaluating Patchw
 - Slider to set the current payday (1–9)
 - Draw shapes on a 5×5 grid and assign buttons, cost, and time penalty
 - Choose a color for each piece
-- Calculates points per cost, points per cost per area, and net points
+- Calculates current value, value per time penalty, and value per time penalty per area
 - Persistent piece library with edit and delete options
 - Purchased tiles move to a separate page and reappear after starting a new game
 - Purchased page displays purchase-time value and efficiency metrics with a mobile-friendly column selector
