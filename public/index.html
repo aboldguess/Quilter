@@ -4,13 +4,14 @@
   Mini README:
   This HTML file renders the user interface for creating and evaluating Patchwork
   tiles. It includes controls for selecting the current age, adding new pieces,
-  and viewing their calculated values.
+  and viewing their calculated values. Columns in the pieces table can be
+  clicked to sort the available tiles.
 
   Structure:
   - Instructions header
   - Age selection slider
   - Button to open the "Add Piece" form
-  - Table listing all available pieces
+  - Table listing all available pieces with sortable columns
   - Hidden modal-like form for drawing a new piece
 -->
 <!DOCTYPE html>
@@ -24,7 +25,7 @@
 <body>
   <header>
     <h1>Patchwork Tile Helper</h1>
-    <p class="instructions">Select the current age, then add or buy tiles. Tap cells to draw shapes. Use "New Game" to reset purchases.</p>
+    <p class="instructions">Select the current age, then add or buy tiles. Tap cells to draw shapes. Tap column headers to sort pieces. Use "New Game" to reset purchases.</p>
   </header>
   <section class="age-control">
     <label for="age">Current Age: <span id="ageDisplay">0</span></label>
@@ -40,12 +41,12 @@
       <thead>
         <tr>
           <th>Shape</th>
-          <th>Buttons</th>
-          <th>Cost</th>
-          <th>Time</th>
-          <th>P/C</th>
-          <th>P/C/A</th>
-          <th>Net</th>
+          <th data-sort="buttons" class="sortable">Buttons</th>
+          <th data-sort="cost" class="sortable">Cost</th>
+          <th data-sort="time" class="sortable">Time</th>
+          <th data-sort="pointsPerCost" class="sortable">P/C</th>
+          <th data-sort="pointsPerCostPerArea" class="sortable">P/C/A</th>
+          <th data-sort="netPoints" class="sortable">Net</th>
           <th>Action</th>
         </tr>
       </thead>

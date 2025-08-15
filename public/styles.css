@@ -9,6 +9,7 @@
  - General layout and typography
  - Table styling for pieces list
  - Grid styling for drawing new pieces
+ - Sortable header indicators
  - Responsive tweaks
 */
 
@@ -51,6 +52,19 @@ header {
   border: 1px solid #ccc;
   padding: 0.5rem;
   text-align: center;
+}
+
+th.sortable {
+  cursor: pointer;
+  user-select: none;
+}
+
+th.sortable.asc::after {
+  content: ' \25B2';
+}
+
+th.sortable.desc::after {
+  content: ' \25BC';
 }
 
 #pieceForm {

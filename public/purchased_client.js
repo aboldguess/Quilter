@@ -4,17 +4,36 @@
  Mini README:
  This script renders the list of tiles purchased during the current game and
  allows players to return a tile to the available pool if selected by mistake.
+ Columns in the table can be clicked to sort the purchases.
 
  Structure:
  - Load purchased tiles from localStorage
- - Render table with shapes and a return button
+ - Render table with shapes, sortable headers, and a return button
  - Navigation back to the main game interface
 */
 
 let purchasedPieces = JSON.parse(localStorage.getItem('purchasedPieces') || '[]');
 
 const purchasedTableBody = document.querySelector('#purchasedTable tbody');
+const purchasedTableHeaders = document.querySelectorAll('#purchasedTable th');
 const backBtn = document.getElementById('backBtn');
+
+const sortState = { key: null, asc: true };
+
+purchasedTableHeaders.forEach(th => {
+  const key = th.dataset.sort;
+  if (!key) return;
+  th.addEventListener('click', () => {
+    if (sortState.key === key) {
+      sortState.asc = !sortState.asc;
+    } else {
+      sortState.key = key;
+      sortState.asc = true;
+    }
+    console.debug('Sorting purchases by', key, sortState.asc ? 'asc' : 'desc');
+    refreshTable();
+  });
+});
 
 function renderShape(shape) {
   const container = document.createElement('div');
@@ -39,8 +58,37 @@ function savePurchased() {
   localStorage.setItem('purchasedPieces', JSON.stringify(purchasedPieces));
 }
 
+function getSortValue(piece, key) {
+  switch (key) {
+    case 'buttons':
+      return piece.buttons;
+    case 'cost':
+      return piece.cost;
+    case 'time':
+      return piece.time;
+    default:
+      return 0;
+  }
+}
+
+function sortPurchasedPieces() {
+  if (!sortState.key) return;
+  purchasedPieces.sort((a, b) => {
+    const aVal = getSortValue(a, sortState.key);
+    const bVal = getSortValue(b, sortState.key);
+    return sortState.asc ? aVal - bVal : bVal - aVal;
+  });
+}
+
 function refreshTable() {
+  sortPurchasedPieces();
   purchasedTableBody.innerHTML = '';
+  purchasedTableHeaders.forEach(th => {
+    th.classList.remove('asc', 'desc');
+    if (th.dataset.sort === sortState.key) {
+      th.classList.add(sortState.asc ? 'asc' : 'desc');
+    }
+  });
   purchasedPieces.forEach(piece => {
     const tr = document.createElement('tr');
 
