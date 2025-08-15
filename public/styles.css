@@ -53,6 +53,18 @@ header {
   text-align: center;
 }
 
+#piecesTable th.sortable {
+  cursor: pointer;
+}
+
+#piecesTable th.sortable.asc::after {
+  content: ' \25B2'; /* up triangle */
+}
+
+#piecesTable th.sortable.desc::after {
+  content: ' \25BC'; /* down triangle */
+}
+
 #pieceForm {
   border: 1px solid #ccc;
   padding: 1rem;
