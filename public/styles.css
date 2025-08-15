@@ -70,6 +70,8 @@ header {
   grid-template-rows: repeat(5, 30px);
   gap: 2px;
   margin-bottom: 1rem;
+  /* default active color used by grid cells */
+  --active-color: #4caf50;
 }
 
 .grid div {
@@ -80,7 +82,8 @@ header {
 }
 
 .grid div.active {
-  background: #4caf50;
+  /* use CSS variable so each grid can set its own piece color */
+  background: var(--active-color);
 }
 
 @media (max-width: 600px) {

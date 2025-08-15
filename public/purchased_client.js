@@ -4,6 +4,7 @@
  Mini README:
  This script renders the list of tiles purchased during the current game and
  allows players to return a tile to the available pool if selected by mistake.
+ Each piece is shown using its chosen color.
 
  Structure:
  - Load purchased tiles from localStorage
@@ -12,15 +13,18 @@
 */
 
 let purchasedPieces = JSON.parse(localStorage.getItem('purchasedPieces') || '[]');
+// assign default color to legacy pieces
+purchasedPieces.forEach(p => { if (!p.color) p.color = '#4caf50'; });
 
 const purchasedTableBody = document.querySelector('#purchasedTable tbody');
 const backBtn = document.getElementById('backBtn');
 
-function renderShape(shape) {
+function renderShape(shape, color = '#4caf50') {
   const container = document.createElement('div');
   container.classList.add('grid');
   container.style.gridTemplateColumns = 'repeat(5, 12px)';
   container.style.gridTemplateRows = 'repeat(5, 12px)';
+  container.style.setProperty('--active-color', color);
   for (let i = 0; i < 25; i++) {
     const cell = document.createElement('div');
     const x = i % 5;
@@ -45,7 +49,7 @@ function refreshTable() {
     const tr = document.createElement('tr');
 
     const shapeTd = document.createElement('td');
-    shapeTd.appendChild(renderShape(piece.shape));
+    shapeTd.appendChild(renderShape(piece.shape, piece.color));
     tr.appendChild(shapeTd);
 
     const buttonsTd = document.createElement('td');
