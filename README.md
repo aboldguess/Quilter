@@ -7,7 +7,8 @@ This repository contains a mobile-friendly web application for evaluating Patchw
 - Slider to set the current game age
 - Draw shapes on a 5×5 grid and assign buttons, cost, and time penalty
 - Calculates points per cost, points per cost per area, and net points
-- Pieces disappear once purchased
+- Persistent piece library with edit and delete options
+- Purchased tiles move to a separate page and reappear after starting a new game
 - Server uses Express with Helmet and Pino for security and logging
 - Configurable port and production mode
 

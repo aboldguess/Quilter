@@ -1,26 +1,31 @@
 /*
- Patchwork Tile Helper Front-End Script
- --------------------------------------
+ Patchwork Client Script
+ -----------------------
  Mini README:
- This script handles the interactive behaviour of the Patchwork helper web app.
- Users can select the current age, create new pieces by drawing on a grid, and
- view statistics to aid their purchase decisions.
+ This browser script powers the main Patchwork helper interface. It manages
+ a persistent library of tiles, handles purchases during a game, and allows
+ pieces to be created, edited, or deleted.
 
  Structure:
- - State management for age and pieces
- - UI rendering functions
- - Event listeners for user actions
+ - State management for library, available, and purchased tiles
+ - Grid rendering utilities and stats calculations
+ - Event listeners for CRUD actions and game flow
 */
 
 const TOTAL_TIME = 53; // total time spaces in Patchwork
 let currentAge = 0;
-let nextId = 1;
-const pieces = [];
+let nextId = parseInt(localStorage.getItem('nextId'), 10) || 1;
+let pieceLibrary = JSON.parse(localStorage.getItem('pieceLibrary') || '[]');
+let purchasedPieces = JSON.parse(localStorage.getItem('purchasedPieces') || '[]');
+let availablePieces = pieceLibrary.filter(p => !purchasedPieces.some(pp => pp.id === p.id));
+let editingPieceId = null;
 
 const ageInput = document.getElementById('age');
 const ageDisplay = document.getElementById('ageDisplay');
 const piecesTableBody = document.querySelector('#piecesTable tbody');
 const addPieceBtn = document.getElementById('addPieceBtn');
+const newGameBtn = document.getElementById('newGameBtn');
+const viewPurchasedBtn = document.getElementById('viewPurchasedBtn');
 const pieceForm = document.getElementById('pieceForm');
 const grid = document.getElementById('grid');
 const buttonsInput = document.getElementById('buttonsInput');
@@ -29,6 +34,15 @@ const timeInput = document.getElementById('timeInput');
 const savePieceBtn = document.getElementById('savePiece');
 const cancelPieceBtn = document.getElementById('cancelPiece');
 
+function saveLibrary() {
+  localStorage.setItem('pieceLibrary', JSON.stringify(pieceLibrary));
+  localStorage.setItem('nextId', String(nextId));
+}
+
+function savePurchased() {
+  localStorage.setItem('purchasedPieces', JSON.stringify(purchasedPieces));
+}
+
 function createGrid() {
   grid.innerHTML = '';
   for (let i = 0; i < 25; i++) {
@@ -36,6 +50,17 @@ function createGrid() {
     cell.addEventListener('click', () => cell.classList.toggle('active'));
     grid.appendChild(cell);
   }
+}
+
+function loadShapeIntoGrid(shape) {
+  createGrid();
+  shape.forEach(p => {
+    const index = p.y * 5 + p.x;
+    const cell = grid.children[index];
+    if (cell) {
+      cell.classList.add('active');
+    }
+  });
 }
 
 function getGridShape() {
@@ -81,7 +106,7 @@ function computeStats(piece) {
 
 function refreshTable() {
   piecesTableBody.innerHTML = '';
-  pieces.forEach(piece => {
+  availablePieces.forEach(piece => {
     const stats = computeStats(piece);
     const tr = document.createElement('tr');
 
@@ -118,14 +143,42 @@ function refreshTable() {
     buyBtn.textContent = 'Purchase';
     buyBtn.disabled = !stats.valid;
     buyBtn.addEventListener('click', () => {
-      const index = pieces.findIndex(p => p.id === piece.id);
+      const index = availablePieces.findIndex(p => p.id === piece.id);
       if (index >= 0) {
         console.debug('Purchasing piece', piece.id);
-        pieces.splice(index, 1);
+        purchasedPieces.push(availablePieces[index]);
+        availablePieces.splice(index, 1);
+        savePurchased();
         refreshTable();
       }
     });
     actionTd.appendChild(buyBtn);
+
+    const editBtn = document.createElement('button');
+    editBtn.textContent = 'Edit';
+    editBtn.addEventListener('click', () => {
+      editingPieceId = piece.id;
+      buttonsInput.value = piece.buttons;
+      costInput.value = piece.cost;
+      timeInput.value = piece.time;
+      loadShapeIntoGrid(piece.shape);
+      pieceForm.classList.remove('hidden');
+    });
+    actionTd.appendChild(editBtn);
+
+    const deleteBtn = document.createElement('button');
+    deleteBtn.textContent = 'Delete';
+    deleteBtn.addEventListener('click', () => {
+      console.debug('Deleting piece', piece.id);
+      pieceLibrary = pieceLibrary.filter(p => p.id !== piece.id);
+      availablePieces = availablePieces.filter(p => p.id !== piece.id);
+      purchasedPieces = purchasedPieces.filter(p => p.id !== piece.id);
+      saveLibrary();
+      savePurchased();
+      refreshTable();
+    });
+    actionTd.appendChild(deleteBtn);
+
     tr.appendChild(actionTd);
 
     piecesTableBody.appendChild(tr);
@@ -139,6 +192,7 @@ ageInput.addEventListener('input', () => {
 });
 
 addPieceBtn.addEventListener('click', () => {
+  editingPieceId = null;
   pieceForm.classList.remove('hidden');
   createGrid();
   buttonsInput.value = 0;
@@ -152,23 +206,53 @@ savePieceBtn.addEventListener('click', () => {
     alert('Please draw at least one square.');
     return;
   }
-  const piece = {
-    id: nextId++,
-    shape,
-    buttons: parseInt(buttonsInput.value, 10) || 0,
-    cost: parseInt(costInput.value, 10) || 0,
-    time: parseInt(timeInput.value, 10) || 0
-  };
-  console.debug('Adding piece', piece);
-  pieces.push(piece);
+  if (editingPieceId) {
+    const piece = pieceLibrary.find(p => p.id === editingPieceId);
+    if (piece) {
+      piece.shape = shape;
+      piece.buttons = parseInt(buttonsInput.value, 10) || 0;
+      piece.cost = parseInt(costInput.value, 10) || 0;
+      piece.time = parseInt(timeInput.value, 10) || 0;
+    }
+    const avail = availablePieces.find(p => p.id === editingPieceId);
+    if (avail) Object.assign(avail, piece);
+    const purch = purchasedPieces.find(p => p.id === editingPieceId);
+    if (purch) Object.assign(purch, piece);
+    console.debug('Updated piece', editingPieceId);
+  } else {
+    const piece = {
+      id: nextId++,
+      shape,
+      buttons: parseInt(buttonsInput.value, 10) || 0,
+      cost: parseInt(costInput.value, 10) || 0,
+      time: parseInt(timeInput.value, 10) || 0
+    };
+    console.debug('Adding piece', piece);
+    pieceLibrary.push(piece);
+    availablePieces.push(piece);
+  }
+  saveLibrary();
   pieceForm.classList.add('hidden');
   refreshTable();
 });
 
 cancelPieceBtn.addEventListener('click', () => {
   pieceForm.classList.add('hidden');
+  editingPieceId = null;
+});
+
+newGameBtn.addEventListener('click', () => {
+  purchasedPieces = [];
+  savePurchased();
+  availablePieces = pieceLibrary.slice();
+  refreshTable();
+});
+
+viewPurchasedBtn.addEventListener('click', () => {
+  window.location.href = 'purchased.html';
 });
 
 // initialize
 createGrid();
 refreshTable();
+
