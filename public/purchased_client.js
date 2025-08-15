@@ -5,12 +5,16 @@
  This script renders tiles purchased during the current game and allows
  players to return a tile to the available pool if selected by mistake. It
  displays each tile's gross and net scores at the moment of purchase along with
- efficiency metrics so scores remain historically accurate.
+ efficiency metrics so scores remain historically accurate. Purchases record
+ which player (yellow or green) bought the tile and a running score is
+ maintained assuming each player starts with 162 points minus the sum of their
+ purchased net values.
 
  Structure:
  - Load purchased tiles from localStorage
  - Display stored purchase-time score metrics
  - Render table with shapes, metrics and a return button
+  - Show running scores for yellow and green players
  - Dropdown to choose which metric column is visible on small screens
  - Navigation back to the main game interface
 */
@@ -21,6 +25,7 @@ let purchasedPieces = JSON.parse(localStorage.getItem('purchasedPieces') || '[]'
 purchasedPieces.forEach(p => {
   if (!p.color) p.color = '#4caf50';
   if (p.purchaseAge === undefined || p.purchaseAge < 1) p.purchaseAge = 1;
+  if (!p.player) p.player = 'unknown';
   const stats = computeMetrics(p);
   if (p.purchaseGross === undefined) p.purchaseGross = stats.grossScore;
   if (p.purchaseNet === undefined) p.purchaseNet = stats.netScore;
@@ -36,6 +41,8 @@ const purchasedTable = document.getElementById('purchasedTable');
 const purchasedTableBody = purchasedTable.querySelector('tbody');
 const backBtn = document.getElementById('backBtn');
 const columnSelect = document.getElementById('columnSelect');
+const yellowScoreEl = document.getElementById('yellowScore');
+const greenScoreEl = document.getElementById('greenScore');
 
 function renderShape(shape, color = '#4caf50') {
   const container = document.createElement('div');
@@ -80,6 +87,10 @@ function refreshTable() {
     shapeTd.appendChild(renderShape(piece.shape, piece.color));
     tr.appendChild(shapeTd);
 
+    const playerTd = document.createElement('td');
+    playerTd.textContent = piece.player || 'unknown';
+    tr.appendChild(playerTd);
+
     const grossTd = document.createElement('td');
     grossTd.classList.add('gross');
     grossTd.textContent = piece.purchaseGross;
@@ -114,6 +125,19 @@ function refreshTable() {
 
     purchasedTableBody.appendChild(tr);
   });
+
+  updateScores();
+}
+
+function updateScores() {
+  const yellowTotal = purchasedPieces
+    .filter(p => p.player === 'yellow')
+    .reduce((sum, p) => sum + (p.purchaseNet || 0), 0);
+  const greenTotal = purchasedPieces
+    .filter(p => p.player === 'green')
+    .reduce((sum, p) => sum + (p.purchaseNet || 0), 0);
+  yellowScoreEl.textContent = 162 - yellowTotal;
+  greenScoreEl.textContent = 162 - greenTotal;
 }
 
 backBtn.addEventListener('click', () => {
