@@ -63,6 +63,10 @@ const colorInput = document.getElementById('colorInput');
 const savePieceBtn = document.getElementById('savePiece');
 const cancelPieceBtn = document.getElementById('cancelPiece');
 
+// Use a pointer-friendly event for taps/clicks so mobile devices respond
+// immediately without relying solely on the delayed "click" synthesis.
+const tapEvent = window.PointerEvent ? 'pointerup' : 'click';
+
 // initialize age slider display
 ageInput.value = currentAge;
 ageDisplay.textContent = currentAge;
@@ -96,7 +100,7 @@ function updateSortIndicators() {
 for (let index = 0; index < headerCells.length; index += 1) {
   const th = headerCells[index];
   if (!sortableColumns[index]) continue; // skip non-sortable headers
-  th.addEventListener('click', () => {
+  th.addEventListener(tapEvent, () => {
     const key = sortableColumns[index];
     if (sortState.key === key) {
       sortState.asc = !sortState.asc;
@@ -123,10 +127,18 @@ function createGrid() {
   grid.style.setProperty('--active-color', colorInput.value);
   for (let i = 0; i < 25; i++) {
     const cell = document.createElement('div');
-    const toggle = () => cell.classList.toggle('active');
-    // Support both mouse and touch interactions for mobile friendliness
-    cell.addEventListener('click', toggle);
-    cell.addEventListener('touchstart', toggle);
+    const toggle = (ev) => {
+      ev.preventDefault();
+      cell.classList.toggle('active');
+    };
+    // Use pointer events when available; fall back to click+touch with proper
+    // prevention so taps on mobile devices only toggle once.
+    if (window.PointerEvent) {
+      cell.addEventListener('pointerdown', toggle);
+    } else {
+      cell.addEventListener('touchstart', toggle, { passive: false });
+      cell.addEventListener('click', toggle);
+    }
     grid.appendChild(cell);
   }
 }
@@ -254,20 +266,23 @@ function refreshTable() {
 
     const actionTd = document.createElement('td');
     const yellowBtn = document.createElement('button');
+    yellowBtn.type = 'button';
     yellowBtn.textContent = 'Buy Yellow';
     yellowBtn.classList.add('buy-yellow');
-    yellowBtn.addEventListener('click', () => purchasePiece(piece, 'yellow'));
+    yellowBtn.addEventListener(tapEvent, () => purchasePiece(piece, 'yellow'));
     actionTd.appendChild(yellowBtn);
 
     const greenBtn = document.createElement('button');
+    greenBtn.type = 'button';
     greenBtn.textContent = 'Buy Green';
     greenBtn.classList.add('buy-green');
-    greenBtn.addEventListener('click', () => purchasePiece(piece, 'green'));
+    greenBtn.addEventListener(tapEvent, () => purchasePiece(piece, 'green'));
     actionTd.appendChild(greenBtn);
 
     const editBtn = document.createElement('button');
+    editBtn.type = 'button';
     editBtn.textContent = 'Edit';
-    editBtn.addEventListener('click', () => {
+    editBtn.addEventListener(tapEvent, () => {
       editingPieceId = piece.id;
       buttonsInput.value = piece.buttons;
       costInput.value = piece.cost;
@@ -279,8 +294,9 @@ function refreshTable() {
     actionTd.appendChild(editBtn);
 
     const deleteBtn = document.createElement('button');
+    deleteBtn.type = 'button';
     deleteBtn.textContent = 'Delete';
-    deleteBtn.addEventListener('click', () => {
+    deleteBtn.addEventListener(tapEvent, () => {
       console.debug('Deleting piece', piece.id);
       pieceLibrary = pieceLibrary.filter(p => p.id !== piece.id);
       availablePieces = availablePieces.filter(p => p.id !== piece.id);
@@ -303,7 +319,7 @@ ageInput.addEventListener('input', () => {
   refreshTable();
 });
 
-addPieceBtn.addEventListener('click', () => {
+addPieceBtn.addEventListener(tapEvent, () => {
   editingPieceId = null;
   pieceForm.classList.remove('hidden');
   colorInput.value = '#4caf50';
@@ -313,7 +329,7 @@ addPieceBtn.addEventListener('click', () => {
   timeInput.value = 0;
 });
 
-savePieceBtn.addEventListener('click', () => {
+savePieceBtn.addEventListener(tapEvent, () => {
   const shape = getGridShape();
   if (shape.length === 0) {
     alert('Please draw at least one square.');
@@ -351,19 +367,19 @@ savePieceBtn.addEventListener('click', () => {
   refreshTable();
 });
 
-cancelPieceBtn.addEventListener('click', () => {
+cancelPieceBtn.addEventListener(tapEvent, () => {
   pieceForm.classList.add('hidden');
   editingPieceId = null;
 });
 
-newGameBtn.addEventListener('click', () => {
+newGameBtn.addEventListener(tapEvent, () => {
   purchasedPieces = [];
   savePurchased();
   availablePieces = pieceLibrary.slice();
   refreshTable();
 });
 
-viewPurchasedBtn.addEventListener('click', () => {
+viewPurchasedBtn.addEventListener(tapEvent, () => {
   window.location.href = 'purchased.html';
 });
 

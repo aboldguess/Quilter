@@ -44,6 +44,9 @@ const columnSelect = document.getElementById('columnSelect');
 const yellowScoreEl = document.getElementById('yellowScore');
 const greenScoreEl = document.getElementById('greenScore');
 
+// Normalise click/tap interactions for mobile devices.
+const tapEvent = window.PointerEvent ? 'pointerup' : 'click';
+
 function renderShape(shape, color = '#4caf50') {
   const container = document.createElement('div');
   container.classList.add('grid');
@@ -116,8 +119,9 @@ function refreshTable() {
     const actionTd = document.createElement('td');
     actionTd.classList.add('action');
     const returnBtn = document.createElement('button');
+    returnBtn.type = 'button';
     returnBtn.textContent = 'Return';
-    returnBtn.addEventListener('click', () => {
+    returnBtn.addEventListener(tapEvent, () => {
       purchasedPieces = purchasedPieces.filter(p => p.id !== piece.id);
       savePurchased();
       refreshTable();
@@ -142,7 +146,7 @@ function updateScores() {
   greenScoreEl.textContent = greenTotal - 162;
 }
 
-backBtn.addEventListener('click', () => {
+backBtn.addEventListener(tapEvent, () => {
   window.location.href = 'index.html';
 });
 
