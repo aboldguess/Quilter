@@ -32,9 +32,11 @@ powershell -ExecutionPolicy Bypass -File scripts/setup_patchwork_env.ps1
 Run the server on the desired host and port:
 ```bash
 # Development
-npm run dev -- --port 4000 --host 0.0.0.0
+npm run dev --port 4000 --host 0.0.0.0
 # Production
-NODE_ENV=production npm run start -- --port 8080 --host 0.0.0.0
+npm start --port 8080 --host 0.0.0.0
+# Alternatively use environment variables
+PORT=5000 HOST=0.0.0.0 npm start
 ```
 Then open `http://HOST:PORT` in a browser from any device on the network.
 
