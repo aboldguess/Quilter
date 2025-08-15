@@ -5,10 +5,11 @@
  This browser script powers the main Patchwork helper interface. It manages
  a persistent library of tiles, handles purchases during a game, and allows
  pieces to be created, colored, edited, or deleted. When a tile is bought its
- value metrics at that moment are stored so the purchased list can show
- historical scores. Table evaluations display the same value formula used at
- purchase time—cost minus twice the area plus remaining button income—and also
- compute value per time penalty and value per time penalty per area.
+ score metrics at that moment are stored so the purchased list can show
+ historical scores. Table evaluations display the same scoring formulas used at
+ purchase time—gross score is twice the area plus remaining payday button income,
+ net score subtracts the cost, and efficiency metrics divide by time penalty and
+ area as applicable.
 
  Structure:
  - State management for library, available, and purchased tiles
@@ -31,11 +32,12 @@ purchasedPieces.forEach(p => {
   // normalize legacy data to the new 1–9 age scale
   if (p.purchaseAge === undefined || p.purchaseAge < 1) p.purchaseAge = 1;
   // legacy records may not have stored purchase-time metrics; compute them
-  const stats = computeValueStats(p, p.purchaseAge);
-  if (p.purchaseValue === undefined) p.purchaseValue = stats.value;
-  if (p.purchaseValuePerTime === undefined) p.purchaseValuePerTime = stats.valuePerTime;
-  if (p.purchaseValuePerTimePerArea === undefined) {
-    p.purchaseValuePerTimePerArea = stats.valuePerTimePerArea;
+  const stats = computeScoreStats(p, p.purchaseAge);
+  if (p.purchaseGross === undefined) p.purchaseGross = stats.grossScore;
+  if (p.purchaseNet === undefined) p.purchaseNet = stats.netScore;
+  if (p.purchaseNetPerTime === undefined) p.purchaseNetPerTime = stats.netScorePerTime;
+  if (p.purchaseNetPerTimePerArea === undefined) {
+    p.purchaseNetPerTimePerArea = stats.netScorePerTimePerArea;
   }
 });
 let availablePieces = pieceLibrary.filter(p => !purchasedPieces.some(pp => pp.id === p.id));
@@ -66,12 +68,10 @@ let sortState = { key: null, asc: true };
 
 // Map header indices to piece/stat keys used for sorting
 const sortableColumns = {
-  1: 'buttons',
-  2: 'cost',
-  3: 'time',
-  4: 'value',
-  5: 'valuePerTime',
-  6: 'valuePerTimePerArea'
+  1: 'grossScore',
+  2: 'netScore',
+  3: 'netScorePerTime',
+  4: 'netScorePerTimePerArea'
 };
 
 // Update header classes to show sort direction arrows
@@ -169,14 +169,15 @@ function renderShape(shape, color = '#4caf50') {
   return container;
 }
 
-// Calculate current value metrics for a piece at a given age
-function computeValueStats(piece, age = currentAge) {
+// Calculate current score metrics for a piece at a given age
+function computeScoreStats(piece, age = currentAge) {
   const area = piece.shape.length;
-  const buttonPoints = piece.buttons * (AGE_COUNT - age);
-  const value = piece.cost - area * 2 + buttonPoints;
-  const valuePerTime = piece.time ? value / piece.time : value;
-  const valuePerTimePerArea = piece.time && area ? value / (piece.time * area) : 0;
-  return { area, value, valuePerTime, valuePerTimePerArea };
+  const remainingPaydays = AGE_COUNT - age;
+  const grossScore = area * 2 + piece.buttons * remainingPaydays;
+  const netScore = grossScore - piece.cost;
+  const netScorePerTime = piece.time ? netScore / piece.time : netScore;
+  const netScorePerTimePerArea = piece.time && area ? netScore / (piece.time * area) : 0;
+  return { area, grossScore, netScore, netScorePerTime, netScorePerTimePerArea };
 }
 
 function refreshTable() {
@@ -184,44 +185,36 @@ function refreshTable() {
   // Create a sorted copy of pieces based on current sort state
   const piecesToRender = availablePieces.slice().sort((a, b) => {
     if (!sortState.key) return 0;
-    const statsA = computeValueStats(a, currentAge);
-    const statsB = computeValueStats(b, currentAge);
-    const valA = a[sortState.key] ?? statsA[sortState.key];
-    const valB = b[sortState.key] ?? statsB[sortState.key];
+    const statsA = computeScoreStats(a, currentAge);
+    const statsB = computeScoreStats(b, currentAge);
+    const valA = statsA[sortState.key];
+    const valB = statsB[sortState.key];
     return sortState.asc ? valA - valB : valB - valA;
   });
   updateSortIndicators();
   piecesToRender.forEach(piece => {
-    const stats = computeValueStats(piece, currentAge);
+    const stats = computeScoreStats(piece, currentAge);
     const tr = document.createElement('tr');
 
     const shapeTd = document.createElement('td');
     shapeTd.appendChild(renderShape(piece.shape, piece.color));
     tr.appendChild(shapeTd);
 
-    const buttonsTd = document.createElement('td');
-    buttonsTd.textContent = piece.buttons;
-    tr.appendChild(buttonsTd);
+    const grossTd = document.createElement('td');
+    grossTd.textContent = stats.grossScore;
+    tr.appendChild(grossTd);
 
-    const costTd = document.createElement('td');
-    costTd.textContent = piece.cost;
-    tr.appendChild(costTd);
+    const netTd = document.createElement('td');
+    netTd.textContent = stats.netScore;
+    tr.appendChild(netTd);
 
-    const timeTd = document.createElement('td');
-    timeTd.textContent = piece.time;
-    tr.appendChild(timeTd);
+    const nptTd = document.createElement('td');
+    nptTd.textContent = stats.netScorePerTime.toFixed(2);
+    tr.appendChild(nptTd);
 
-    const valueTd = document.createElement('td');
-    valueTd.textContent = stats.value;
-    tr.appendChild(valueTd);
-
-    const vptTd = document.createElement('td');
-    vptTd.textContent = stats.valuePerTime.toFixed(2);
-    tr.appendChild(vptTd);
-
-    const vptaTd = document.createElement('td');
-    vptaTd.textContent = stats.valuePerTimePerArea.toFixed(2);
-    tr.appendChild(vptaTd);
+    const nptaTd = document.createElement('td');
+    nptaTd.textContent = stats.netScorePerTimePerArea.toFixed(2);
+    tr.appendChild(nptaTd);
 
     const actionTd = document.createElement('td');
     const buyBtn = document.createElement('button');
@@ -232,14 +225,15 @@ function refreshTable() {
       if (index >= 0) {
         console.debug('Purchasing piece', piece.id);
         const purchaseAge = currentAge;
-        // capture the piece's value metrics at the moment of purchase
-        const statsAtPurchase = computeValueStats(availablePieces[index], purchaseAge);
+        // capture the piece's score metrics at the moment of purchase
+        const statsAtPurchase = computeScoreStats(availablePieces[index], purchaseAge);
         const purchasedCopy = {
           ...availablePieces[index],
           purchaseAge,
-          purchaseValue: statsAtPurchase.value,
-          purchaseValuePerTime: statsAtPurchase.valuePerTime,
-          purchaseValuePerTimePerArea: statsAtPurchase.valuePerTimePerArea
+          purchaseGross: statsAtPurchase.grossScore,
+          purchaseNet: statsAtPurchase.netScore,
+          purchaseNetPerTime: statsAtPurchase.netScorePerTime,
+          purchaseNetPerTimePerArea: statsAtPurchase.netScorePerTimePerArea
         };
         purchasedPieces.push(purchasedCopy);
         availablePieces.splice(index, 1);

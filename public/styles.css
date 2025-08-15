@@ -121,12 +121,14 @@ header {
   }
 
   /* hide metric and action columns by default on narrow screens */
-  #purchasedTable th.value,
-  #purchasedTable th.valuePerTime,
-  #purchasedTable th.valuePerTimePerArea,
-  #purchasedTable td.value,
-  #purchasedTable td.valuePerTime,
-  #purchasedTable td.valuePerTimePerArea {
+  #purchasedTable th.gross,
+  #purchasedTable th.net,
+  #purchasedTable th.netPerTime,
+  #purchasedTable th.netPerTimePerArea,
+  #purchasedTable td.gross,
+  #purchasedTable td.net,
+  #purchasedTable td.netPerTime,
+  #purchasedTable td.netPerTimePerArea {
     display: none;
   }
 
@@ -136,12 +138,14 @@ header {
   }
 
   /* show selected metric column */
-  #purchasedTable.show-value th.value,
-  #purchasedTable.show-value td.value,
-  #purchasedTable.show-valuePerTime th.valuePerTime,
-  #purchasedTable.show-valuePerTime td.valuePerTime,
-  #purchasedTable.show-valuePerTimePerArea th.valuePerTimePerArea,
-  #purchasedTable.show-valuePerTimePerArea td.valuePerTimePerArea {
+  #purchasedTable.show-gross th.gross,
+  #purchasedTable.show-gross td.gross,
+  #purchasedTable.show-net th.net,
+  #purchasedTable.show-net td.net,
+  #purchasedTable.show-netPerTime th.netPerTime,
+  #purchasedTable.show-netPerTime td.netPerTime,
+  #purchasedTable.show-netPerTimePerArea th.netPerTimePerArea,
+  #purchasedTable.show-netPerTimePerArea td.netPerTimePerArea {
     display: table-cell;
   }
 }
