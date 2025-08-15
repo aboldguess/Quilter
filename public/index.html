@@ -1,0 +1,68 @@
+<!--
+  Patchwork Tile Helper Web Page
+  ------------------------------
+  Mini README:
+  This HTML file renders the user interface for creating and evaluating Patchwork
+  tiles. It includes controls for selecting the current age, adding new pieces,
+  and viewing their calculated values.
+
+  Structure:
+  - Instructions header
+  - Age selection slider
+  - Button to open the "Add Piece" form
+  - Table listing all available pieces
+  - Hidden modal-like form for drawing a new piece
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Patchwork Tile Helper</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header>
+    <h1>Patchwork Tile Helper</h1>
+    <p class="instructions">Select the current age, then add or buy tiles. Tap cells to draw shapes.</p>
+  </header>
+  <section class="age-control">
+    <label for="age">Current Age: <span id="ageDisplay">0</span></label>
+    <input type="range" id="age" min="0" max="53" value="0" />
+  </section>
+  <section class="piece-actions">
+    <button id="addPieceBtn">Add Piece</button>
+  </section>
+  <section>
+    <table id="piecesTable">
+      <thead>
+        <tr>
+          <th>Shape</th>
+          <th>Buttons</th>
+          <th>Cost</th>
+          <th>Time</th>
+          <th>P/C</th>
+          <th>P/C/A</th>
+          <th>Net</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </section>
+  <section id="pieceForm" class="hidden">
+    <h2>New Piece</h2>
+    <div id="grid" class="grid"></div>
+    <div class="form-fields">
+      <label>Buttons: <input type="number" id="buttonsInput" min="0" value="0" /></label>
+      <label>Cost: <input type="number" id="costInput" min="0" value="0" /></label>
+      <label>Time Penalty: <input type="number" id="timeInput" min="0" value="0" /></label>
+    </div>
+    <div class="form-actions">
+      <button id="savePiece">Save</button>
+      <button id="cancelPiece">Cancel</button>
+    </div>
+  </section>
+  <script src="app.js"></script>
+</body>
+</html>

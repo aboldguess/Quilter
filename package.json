@@ -1,0 +1,32 @@
+{
+  "name": "quilter",
+  "version": "1.0.0",
+  "description": "Responsive web app for evaluating Patchwork tiles",
+  "main": "patchwork_server.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node patchwork_server.js",
+    "dev": "nodemon patchwork_server.js",
+    "prod": "NODE_ENV=production node patchwork_server.js",
+    "lint": "eslint .",
+    "test": "echo \"No tests\""
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "dotenv": "^17.2.1",
+    "express": "^5.1.0",
+    "helmet": "^8.1.0",
+    "pino": "^9.9.0",
+    "pino-http": "^10.5.0"
+  },
+  "devDependencies": {
+    "eslint": "^9.33.0",
+    "globals": "^16.3.0",
+    "nodemon": "^3.1.10"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
