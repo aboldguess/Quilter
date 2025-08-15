@@ -4,7 +4,8 @@
  Mini README:
  This browser script powers the main Patchwork helper interface. It manages
  a persistent library of tiles, handles purchases during a game, and allows
- pieces to be created, edited, or deleted.
+ pieces to be created, edited, or deleted. The pieces table headers can be
+ clicked to sort by buttons, cost, time, or calculated metrics.
 
  Structure:
  - State management for library, available, and purchased tiles
@@ -23,6 +24,7 @@ let editingPieceId = null;
 const ageInput = document.getElementById('age');
 const ageDisplay = document.getElementById('ageDisplay');
 const piecesTableBody = document.querySelector('#piecesTable tbody');
+const piecesTableHeaders = document.querySelectorAll('#piecesTable th');
 const addPieceBtn = document.getElementById('addPieceBtn');
 const newGameBtn = document.getElementById('newGameBtn');
 const viewPurchasedBtn = document.getElementById('viewPurchasedBtn');
@@ -33,6 +35,23 @@ const costInput = document.getElementById('costInput');
 const timeInput = document.getElementById('timeInput');
 const savePieceBtn = document.getElementById('savePiece');
 const cancelPieceBtn = document.getElementById('cancelPiece');
+
+const sortState = { key: null, asc: true };
+
+piecesTableHeaders.forEach(th => {
+  const key = th.dataset.sort;
+  if (!key) return;
+  th.addEventListener('click', () => {
+    if (sortState.key === key) {
+      sortState.asc = !sortState.asc;
+    } else {
+      sortState.key = key;
+      sortState.asc = true;
+    }
+    console.debug('Sorting pieces by', key, sortState.asc ? 'asc' : 'desc');
+    refreshTable();
+  });
+});
 
 function saveLibrary() {
   localStorage.setItem('pieceLibrary', JSON.stringify(pieceLibrary));
@@ -104,8 +123,43 @@ function computeStats(piece) {
   return { area, pointsPerCost, pointsPerCostPerArea, netPoints, valid };
 }
 
+function getSortValue(piece, key) {
+  switch (key) {
+    case 'buttons':
+      return piece.buttons;
+    case 'cost':
+      return piece.cost;
+    case 'time':
+      return piece.time;
+    case 'pointsPerCost':
+      return computeStats(piece).pointsPerCost;
+    case 'pointsPerCostPerArea':
+      return computeStats(piece).pointsPerCostPerArea;
+    case 'netPoints':
+      return computeStats(piece).netPoints;
+    default:
+      return 0;
+  }
+}
+
+function sortAvailablePieces() {
+  if (!sortState.key) return;
+  availablePieces.sort((a, b) => {
+    const aVal = getSortValue(a, sortState.key);
+    const bVal = getSortValue(b, sortState.key);
+    return sortState.asc ? aVal - bVal : bVal - aVal;
+  });
+}
+
 function refreshTable() {
+  sortAvailablePieces();
   piecesTableBody.innerHTML = '';
+  piecesTableHeaders.forEach(th => {
+    th.classList.remove('asc', 'desc');
+    if (th.dataset.sort === sortState.key) {
+      th.classList.add(sortState.asc ? 'asc' : 'desc');
+    }
+  });
   availablePieces.forEach(piece => {
     const stats = computeStats(piece);
     const tr = document.createElement('tr');

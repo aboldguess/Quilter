@@ -4,11 +4,11 @@
   Mini README:
   This HTML page lists tiles that have been purchased in the current game.
   It allows players to review their buys and optionally return a tile to the
-  available pool.
+  available pool. Columns in the table can be clicked to sort the purchases.
 
   Structure:
   - Instructions header with navigation back to the game
-  - Table displaying purchased tiles
+  - Table displaying purchased tiles with sortable columns
   - Script handling rendering and return actions
 -->
 <!DOCTYPE html>
@@ -22,7 +22,7 @@
 <body>
   <header>
     <h1>Purchased Tiles</h1>
-    <p class="instructions">These tiles have been bought this game. Use "Return" to undo a purchase.</p>
+    <p class="instructions">These tiles have been bought this game. Tap column headers to sort. Use "Return" to undo a purchase.</p>
     <button id="backBtn">Back to Game</button>
   </header>
   <section>
@@ -30,9 +30,9 @@
       <thead>
         <tr>
           <th>Shape</th>
-          <th>Buttons</th>
-          <th>Cost</th>
-          <th>Time</th>
+          <th data-sort="buttons" class="sortable">Buttons</th>
+          <th data-sort="cost" class="sortable">Cost</th>
+          <th data-sort="time" class="sortable">Time</th>
           <th>Action</th>
         </tr>
       </thead>
