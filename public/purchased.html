@@ -2,13 +2,14 @@
   Patchwork Purchased Tiles Page
   ------------------------------
   Mini README:
-  This HTML page lists tiles that have been purchased in the current game.
-  It allows players to review their buys, see each tile's value at the time of
-  purchase, and optionally return a tile to the available pool.
+  This HTML page lists tiles that have been purchased in the current game. It
+  shows the point value each tile had when bought along with efficiency metrics
+  and optionally lets players return a tile to the available pool.
 
   Structure:
   - Instructions header with navigation back to the game
-  - Table displaying purchased tiles and their purchase-time values
+  - Optional dropdown to choose visible metric on small screens
+  - Table displaying purchase-time value metrics
   - Script handling rendering and return actions
 -->
 <!DOCTYPE html>
@@ -26,14 +27,21 @@
     <button id="backBtn">Back to Game</button>
   </header>
   <section>
+    <div class="column-select">
+      <label for="columnSelect">Show:</label>
+      <select id="columnSelect">
+        <option value="value">Current Value</option>
+        <option value="valuePerTime">Value / Time</option>
+        <option value="valuePerTimePerArea">Value / Time / Area</option>
+      </select>
+    </div>
     <table id="purchasedTable">
       <thead>
         <tr>
           <th>Shape</th>
-          <th>Buttons</th>
-          <th>Cost</th>
-          <th>Time</th>
-          <th>Purchase Value</th>
+          <th class="value">Current Value</th>
+          <th class="valuePerTime">Value / Time</th>
+          <th class="valuePerTimePerArea">Value / Time / Area</th>
           <th>Action</th>
         </tr>
       </thead>

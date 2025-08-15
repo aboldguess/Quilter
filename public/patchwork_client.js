@@ -5,9 +5,10 @@
  This browser script powers the main Patchwork helper interface. It manages
  a persistent library of tiles, handles purchases during a game, and allows
  pieces to be created, colored, edited, or deleted. When a tile is bought its
- value at that moment is stored so the purchased list can show historical
- scores. Piece value is calculated as 2 points per occupied square plus
- future button income across the remaining ages, minus the piece cost.
+ value metrics at that moment are stored so the purchased list can show
+ historical scores. Table evaluations use a heuristic of 2 points per occupied
+ square plus future button income minus cost, while purchase-time values use
+ cost minus twice the area plus remaining button income.
 
  Structure:
  - State management for library, available, and purchased tiles
@@ -29,10 +30,12 @@ purchasedPieces.forEach(p => {
   if (!p.color) p.color = '#4caf50';
   // normalize legacy data to the new 1–9 age scale
   if (p.purchaseAge === undefined || p.purchaseAge < 1) p.purchaseAge = 1;
-  // legacy records may not have stored value; compute it based on purchase age
-  if (p.purchaseValue === undefined) {
-    const stats = computeStats(p, p.purchaseAge);
-    p.purchaseValue = stats.value;
+  // legacy records may not have stored purchase-time metrics; compute them
+  const stats = computePurchaseStats(p, p.purchaseAge);
+  if (p.purchaseValue === undefined) p.purchaseValue = stats.value;
+  if (p.purchaseValuePerTime === undefined) p.purchaseValuePerTime = stats.valuePerTime;
+  if (p.purchaseValuePerTimePerArea === undefined) {
+    p.purchaseValuePerTimePerArea = stats.valuePerTimePerArea;
   }
 });
 let availablePieces = pieceLibrary.filter(p => !purchasedPieces.some(pp => pp.id === p.id));
@@ -178,6 +181,16 @@ function computeStats(piece, age = currentAge) {
   return { area, pointsPerCost, pointsPerCostPerArea, value: totalValue, valid: true };
 }
 
+// Calculate purchase-time metrics used on the purchased tiles page
+function computePurchaseStats(piece, age = currentAge) {
+  const area = piece.shape.length;
+  const buttonPoints = piece.buttons * (AGE_COUNT - age);
+  const value = piece.cost - area * 2 + buttonPoints;
+  const valuePerTime = piece.time ? value / piece.time : value;
+  const valuePerTimePerArea = piece.time && area ? value / (piece.time * area) : 0;
+  return { value, valuePerTime, valuePerTimePerArea };
+}
+
 function refreshTable() {
   piecesTableBody.innerHTML = '';
   // Create a sorted copy of pieces based on current sort state
@@ -231,12 +244,14 @@ function refreshTable() {
       if (index >= 0) {
         console.debug('Purchasing piece', piece.id);
         const purchaseAge = currentAge;
-        // capture the piece's value at the moment of purchase so it never changes
-        const statsAtPurchase = computeStats(availablePieces[index], purchaseAge);
+        // capture the piece's value metrics at the moment of purchase
+        const statsAtPurchase = computePurchaseStats(availablePieces[index], purchaseAge);
         const purchasedCopy = {
           ...availablePieces[index],
           purchaseAge,
-          purchaseValue: statsAtPurchase.value
+          purchaseValue: statsAtPurchase.value,
+          purchaseValuePerTime: statsAtPurchase.valuePerTime,
+          purchaseValuePerTimePerArea: statsAtPurchase.valuePerTimePerArea
         };
         purchasedPieces.push(purchasedCopy);
         availablePieces.splice(index, 1);
