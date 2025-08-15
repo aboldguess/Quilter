@@ -10,7 +10,7 @@ This repository contains a mobile-friendly web application for evaluating Patchw
 - Persistent piece library with edit and delete options
 - Purchased tiles move to a separate page and reappear after starting a new game
 - Server uses Express with Helmet and Pino for security and logging
-- Configurable port and production mode
+- Configurable host/port and production mode
 
 ## Setup
 ### Linux / Raspberry Pi
@@ -27,14 +27,14 @@ powershell -ExecutionPolicy Bypass -File scripts/setup_patchwork_env.ps1
 ```
 
 ## Usage
-Run the server on the desired port:
+Run the server on the desired host and port:
 ```bash
 # Development
-npm run dev -- --port=4000
+npm run dev -- --port 4000 --host 0.0.0.0
 # Production
-NODE_ENV=production npm run start -- --port=8080
+NODE_ENV=production npm run start -- --port 8080 --host 0.0.0.0
 ```
-Then open `http://localhost:PORT` in a browser.
+Then open `http://HOST:PORT` in a browser from any device on the network.
 
 ## Debugging
 - Server logs are written to stdout using Pino.
