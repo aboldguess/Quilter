@@ -80,19 +80,22 @@ const sortableColumns = {
 
 // Update header classes to show sort direction arrows
 function updateSortIndicators() {
-  headerCells.forEach((th, index) => {
+  // Older mobile browsers may not support NodeList.forEach; use a classic loop
+  for (let index = 0; index < headerCells.length; index += 1) {
+    const th = headerCells[index];
     th.classList.remove('asc', 'desc');
     if (sortableColumns[index]) {
       if (sortState.key === sortableColumns[index]) {
         th.classList.add(sortState.asc ? 'asc' : 'desc');
       }
     }
-  });
+  }
 }
 
 // Clicking a header toggles sort on that column
-headerCells.forEach((th, index) => {
-  if (!sortableColumns[index]) return; // skip non-sortable headers
+for (let index = 0; index < headerCells.length; index += 1) {
+  const th = headerCells[index];
+  if (!sortableColumns[index]) continue; // skip non-sortable headers
   th.addEventListener('click', () => {
     const key = sortableColumns[index];
     if (sortState.key === key) {
@@ -103,7 +106,7 @@ headerCells.forEach((th, index) => {
     console.debug('Sorting by', key, sortState.asc ? 'asc' : 'desc');
     refreshTable();
   });
-});
+}
 
 function saveLibrary() {
   localStorage.setItem('pieceLibrary', JSON.stringify(pieceLibrary));
@@ -120,7 +123,10 @@ function createGrid() {
   grid.style.setProperty('--active-color', colorInput.value);
   for (let i = 0; i < 25; i++) {
     const cell = document.createElement('div');
-    cell.addEventListener('click', () => cell.classList.toggle('active'));
+    const toggle = () => cell.classList.toggle('active');
+    // Support both mouse and touch interactions for mobile friendliness
+    cell.addEventListener('click', toggle);
+    cell.addEventListener('touchstart', toggle);
     grid.appendChild(cell);
   }
 }
