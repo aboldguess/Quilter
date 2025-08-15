@@ -3,12 +3,12 @@
   ------------------------------
   Mini README:
   This HTML file renders the user interface for creating and evaluating Patchwork
-  tiles. It includes controls for selecting the current age, adding new pieces,
+  tiles. It includes controls for selecting the current payday, adding new pieces,
   and viewing their calculated values.
 
   Structure:
   - Instructions header
-  - Age selection slider
+  - Payday selection slider
   - Button to open the "Add Piece" form
   - Table listing all available pieces with a calculated value column (sortable by headers)
   - Hidden modal-like form for drawing a new piece
@@ -24,11 +24,11 @@
 <body>
   <header>
     <h1>Patchwork Tile Helper</h1>
-    <p class="instructions">Select the current age, then add or buy tiles. Tap cells to draw shapes and choose a color. Use "New Game" to reset purchases. Tap column headers to sort pieces.</p>
+    <p class="instructions">Select the current payday, then add or buy tiles. Tap cells to draw shapes and choose a color. Use "New Game" to reset purchases. Tap column headers to sort pieces.</p>
   </header>
   <section class="age-control">
-    <label for="age">Current Age: <span id="ageDisplay">0</span></label>
-    <input type="range" id="age" min="0" max="53" value="0" />
+    <label for="age">Current Payday: <span id="ageDisplay">1</span></label>
+    <input type="range" id="age" min="1" max="9" value="1" />
   </section>
   <section class="piece-actions">
     <button id="addPieceBtn">Add Piece</button>

@@ -13,12 +13,13 @@
  - Navigation back to the main game interface
 */
 
-const AGE_COUNT = 9; // total number of scoring ages
+const AGE_COUNT = 9; // total number of paydays/ages
 let purchasedPieces = JSON.parse(localStorage.getItem('purchasedPieces') || '[]');
 // assign defaults to legacy pieces
 purchasedPieces.forEach(p => {
   if (!p.color) p.color = '#4caf50';
-  if (p.purchaseAge === undefined) p.purchaseAge = 0;
+  // normalize legacy data to the new 1–9 age scale
+  if (p.purchaseAge === undefined || p.purchaseAge < 1) p.purchaseAge = 1;
 });
 
 const purchasedTableBody = document.querySelector('#purchasedTable tbody');

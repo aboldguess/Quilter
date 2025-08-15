@@ -4,7 +4,7 @@ This repository contains a mobile-friendly web application for evaluating Patchw
 
 ## Features
 - Responsive interface designed for phones
-- Slider to set the current game age
+- Slider to set the current payday (1–9)
 - Draw shapes on a 5×5 grid and assign buttons, cost, and time penalty
 - Choose a color for each piece
 - Calculates points per cost, points per cost per area, and net points
