@@ -70,7 +70,9 @@ function savePurchased() {
 
 function computeMetrics(piece) {
   const area = piece.shape.length;
-  const remainingPaydays = AGE_COUNT - piece.purchaseAge;
+  // purchaseAge stores the next payday to be passed at time of buy.
+  // To capture all remaining paydays, subtract from AGE_COUNT and add 1.
+  const remainingPaydays = AGE_COUNT - piece.purchaseAge + 1;
   const grossScore = area * 2 + piece.buttons * remainingPaydays;
   const netScore = grossScore - piece.cost;
   const netScorePerTime = piece.time ? netScore / piece.time : netScore;
