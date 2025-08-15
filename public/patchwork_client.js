@@ -10,6 +10,7 @@
  - State management for library, available, and purchased tiles
  - Grid rendering utilities and stats calculations
  - Event listeners for CRUD actions and game flow
+ - Column sorting for the pieces table
 */
 
 const TOTAL_TIME = 53; // total time spaces in Patchwork
@@ -26,6 +27,7 @@ let editingPieceId = null;
 const ageInput = document.getElementById('age');
 const ageDisplay = document.getElementById('ageDisplay');
 const piecesTableBody = document.querySelector('#piecesTable tbody');
+const headerCells = document.querySelectorAll('#piecesTable thead th');
 const addPieceBtn = document.getElementById('addPieceBtn');
 const newGameBtn = document.getElementById('newGameBtn');
 const viewPurchasedBtn = document.getElementById('viewPurchasedBtn');
@@ -37,6 +39,46 @@ const timeInput = document.getElementById('timeInput');
 const colorInput = document.getElementById('colorInput');
 const savePieceBtn = document.getElementById('savePiece');
 const cancelPieceBtn = document.getElementById('cancelPiece');
+
+// Track which column is sorted and direction
+let sortState = { key: null, asc: true };
+
+// Map header indices to piece/stat keys used for sorting
+const sortableColumns = {
+  1: 'buttons',
+  2: 'cost',
+  3: 'time',
+  4: 'pointsPerCost',
+  5: 'pointsPerCostPerArea',
+  6: 'netPoints'
+};
+
+// Update header classes to show sort direction arrows
+function updateSortIndicators() {
+  headerCells.forEach((th, index) => {
+    th.classList.remove('asc', 'desc');
+    if (sortableColumns[index]) {
+      if (sortState.key === sortableColumns[index]) {
+        th.classList.add(sortState.asc ? 'asc' : 'desc');
+      }
+    }
+  });
+}
+
+// Clicking a header toggles sort on that column
+headerCells.forEach((th, index) => {
+  if (!sortableColumns[index]) return; // skip non-sortable headers
+  th.addEventListener('click', () => {
+    const key = sortableColumns[index];
+    if (sortState.key === key) {
+      sortState.asc = !sortState.asc;
+    } else {
+      sortState = { key, asc: true };
+    }
+    console.debug('Sorting by', key, sortState.asc ? 'asc' : 'desc');
+    refreshTable();
+  });
+});
 
 function saveLibrary() {
   localStorage.setItem('pieceLibrary', JSON.stringify(pieceLibrary));
@@ -118,7 +160,17 @@ function computeStats(piece) {
 
 function refreshTable() {
   piecesTableBody.innerHTML = '';
-  availablePieces.forEach(piece => {
+  // Create a sorted copy of pieces based on current sort state
+  const piecesToRender = availablePieces.slice().sort((a, b) => {
+    if (!sortState.key) return 0;
+    const statsA = computeStats(a);
+    const statsB = computeStats(b);
+    const valA = a[sortState.key] ?? statsA[sortState.key];
+    const valB = b[sortState.key] ?? statsB[sortState.key];
+    return sortState.asc ? valA - valB : valB - valA;
+  });
+  updateSortIndicators();
+  piecesToRender.forEach(piece => {
     const stats = computeStats(piece);
     const tr = document.createElement('tr');
 
