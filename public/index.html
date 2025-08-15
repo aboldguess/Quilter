@@ -4,13 +4,13 @@
   Mini README:
   This HTML file renders the user interface for creating and evaluating Patchwork
   tiles. It includes controls for selecting the current payday, adding new pieces,
-  and viewing their calculated values.
+  and viewing their calculated scores.
 
   Structure:
   - Instructions header
   - Payday selection slider
   - Button to open the "Add Piece" form
-  - Table listing all available pieces with current value metrics (sortable by headers)
+  - Table listing all available pieces with current score metrics (sortable by headers)
   - Hidden modal-like form for drawing a new piece
 -->
 <!DOCTYPE html>
@@ -40,12 +40,10 @@
       <thead>
         <tr>
           <th>Shape</th>
-          <th class="sortable">Buttons</th>
-          <th class="sortable">Cost</th>
-          <th class="sortable">Time Penalty</th>
-          <th class="sortable">Current Value</th>
-          <th class="sortable">Value/Time</th>
-          <th class="sortable">Value/Time/Area</th>
+          <th class="sortable">Gross Score</th>
+          <th class="sortable">Net Score</th>
+          <th class="sortable">Net / Time Penalty</th>
+          <th class="sortable">Net / Time / Area</th>
           <th>Action</th>
         </tr>
       </thead>

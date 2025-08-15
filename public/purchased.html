@@ -3,13 +3,14 @@
   ------------------------------
   Mini README:
   This HTML page lists tiles that have been purchased in the current game. It
-  shows the point value each tile had when bought along with efficiency metrics
-  and optionally lets players return a tile to the available pool.
+  shows the gross and net scores each tile had when bought along with
+  efficiency metrics and optionally lets players return a tile to the available
+  pool.
 
   Structure:
   - Instructions header with navigation back to the game
   - Optional dropdown to choose visible metric on small screens
-  - Table displaying purchase-time value metrics
+  - Table displaying purchase-time score metrics
   - Script handling rendering and return actions (action column hidden on small screens)
 -->
 <!DOCTYPE html>
@@ -23,25 +24,27 @@
 <body>
   <header>
     <h1>Purchased Tiles</h1>
-    <p class="instructions">These tiles have been bought this game. Values reflect remaining paydays at purchase. Use "Return" to undo a purchase.</p>
+    <p class="instructions">These tiles have been bought this game. Scores reflect remaining paydays at purchase. Use "Return" to undo a purchase.</p>
     <button id="backBtn">Back to Game</button>
   </header>
   <section>
     <div class="column-select">
       <label for="columnSelect">Show:</label>
       <select id="columnSelect">
-        <option value="value">Current Value</option>
-        <option value="valuePerTime">Value / Time</option>
-        <option value="valuePerTimePerArea">Value / Time / Area</option>
+        <option value="gross">Gross Score</option>
+        <option value="net">Net Score</option>
+        <option value="netPerTime">Net / Time Penalty</option>
+        <option value="netPerTimePerArea">Net / Time / Area</option>
       </select>
     </div>
     <table id="purchasedTable">
       <thead>
         <tr>
           <th>Shape</th>
-          <th class="value">Current Value</th>
-          <th class="valuePerTime">Value / Time</th>
-          <th class="valuePerTimePerArea">Value / Time / Area</th>
+          <th class="gross">Gross Score</th>
+          <th class="net">Net Score</th>
+          <th class="netPerTime">Net / Time Penalty</th>
+          <th class="netPerTimePerArea">Net / Time / Area</th>
           <th class="action">Action</th>
         </tr>
       </thead>

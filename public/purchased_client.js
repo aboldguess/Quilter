@@ -4,12 +4,12 @@
  Mini README:
  This script renders tiles purchased during the current game and allows
  players to return a tile to the available pool if selected by mistake. It
- displays each tile's point value at the moment of purchase along with value
- per time penalty metrics so scores remain historically accurate.
+ displays each tile's gross and net scores at the moment of purchase along with
+ efficiency metrics so scores remain historically accurate.
 
  Structure:
  - Load purchased tiles from localStorage
- - Display stored purchase-time value metrics
+ - Display stored purchase-time score metrics
  - Render table with shapes, metrics and a return button
  - Dropdown to choose which metric column is visible on small screens
  - Navigation back to the main game interface
@@ -22,10 +22,11 @@ purchasedPieces.forEach(p => {
   if (!p.color) p.color = '#4caf50';
   if (p.purchaseAge === undefined || p.purchaseAge < 1) p.purchaseAge = 1;
   const stats = computeMetrics(p);
-  if (p.purchaseValue === undefined) p.purchaseValue = stats.value;
-  if (p.purchaseValuePerTime === undefined) p.purchaseValuePerTime = stats.valuePerTime;
-  if (p.purchaseValuePerTimePerArea === undefined) {
-    p.purchaseValuePerTimePerArea = stats.valuePerTimePerArea;
+  if (p.purchaseGross === undefined) p.purchaseGross = stats.grossScore;
+  if (p.purchaseNet === undefined) p.purchaseNet = stats.netScore;
+  if (p.purchaseNetPerTime === undefined) p.purchaseNetPerTime = stats.netScorePerTime;
+  if (p.purchaseNetPerTimePerArea === undefined) {
+    p.purchaseNetPerTimePerArea = stats.netScorePerTimePerArea;
   }
 });
 // persist any computed defaults
@@ -62,11 +63,12 @@ function savePurchased() {
 
 function computeMetrics(piece) {
   const area = piece.shape.length;
-  const buttonPoints = piece.buttons * (AGE_COUNT - piece.purchaseAge);
-  const value = piece.cost - area * 2 + buttonPoints;
-  const valuePerTime = piece.time ? value / piece.time : value;
-  const valuePerTimePerArea = piece.time && area ? value / (piece.time * area) : 0;
-  return { value, valuePerTime, valuePerTimePerArea };
+  const remainingPaydays = AGE_COUNT - piece.purchaseAge;
+  const grossScore = area * 2 + piece.buttons * remainingPaydays;
+  const netScore = grossScore - piece.cost;
+  const netScorePerTime = piece.time ? netScore / piece.time : netScore;
+  const netScorePerTimePerArea = piece.time && area ? netScore / (piece.time * area) : 0;
+  return { grossScore, netScore, netScorePerTime, netScorePerTimePerArea };
 }
 
 function refreshTable() {
@@ -78,20 +80,25 @@ function refreshTable() {
     shapeTd.appendChild(renderShape(piece.shape, piece.color));
     tr.appendChild(shapeTd);
 
-    const valueTd = document.createElement('td');
-    valueTd.classList.add('value');
-    valueTd.textContent = piece.purchaseValue;
-    tr.appendChild(valueTd);
+    const grossTd = document.createElement('td');
+    grossTd.classList.add('gross');
+    grossTd.textContent = piece.purchaseGross;
+    tr.appendChild(grossTd);
 
-    const vptTd = document.createElement('td');
-    vptTd.classList.add('valuePerTime');
-    vptTd.textContent = piece.purchaseValuePerTime.toFixed(2);
-    tr.appendChild(vptTd);
+    const netTd = document.createElement('td');
+    netTd.classList.add('net');
+    netTd.textContent = piece.purchaseNet;
+    tr.appendChild(netTd);
 
-    const vptaTd = document.createElement('td');
-    vptaTd.classList.add('valuePerTimePerArea');
-    vptaTd.textContent = piece.purchaseValuePerTimePerArea.toFixed(2);
-    tr.appendChild(vptaTd);
+    const nptTd = document.createElement('td');
+    nptTd.classList.add('netPerTime');
+    nptTd.textContent = piece.purchaseNetPerTime.toFixed(2);
+    tr.appendChild(nptTd);
+
+    const nptaTd = document.createElement('td');
+    nptaTd.classList.add('netPerTimePerArea');
+    nptaTd.textContent = piece.purchaseNetPerTimePerArea.toFixed(2);
+    tr.appendChild(nptaTd);
 
     const actionTd = document.createElement('td');
     actionTd.classList.add('action');
@@ -114,7 +121,7 @@ backBtn.addEventListener('click', () => {
 });
 
 columnSelect.addEventListener('change', () => {
-  purchasedTable.classList.remove('show-value', 'show-valuePerTime', 'show-valuePerTimePerArea');
+  purchasedTable.classList.remove('show-gross', 'show-net', 'show-netPerTime', 'show-netPerTimePerArea');
   purchasedTable.classList.add('show-' + columnSelect.value);
 });
 
