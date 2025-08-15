@@ -172,7 +172,10 @@ function renderShape(shape, color = '#4caf50') {
 // Calculate current score metrics for a piece at a given age
 function computeScoreStats(piece, age = currentAge) {
   const area = piece.shape.length;
-  const remainingPaydays = AGE_COUNT - age;
+  // age slider names the *next* payday to be passed, so when age is 1
+  // there are still all 9 paydays remaining. Use AGE_COUNT - age + 1 as the
+  // base to reflect the correct number of remaining paydays.
+  const remainingPaydays = AGE_COUNT - age + 1;
   const grossScore = area * 2 + piece.buttons * remainingPaydays;
   const netScore = grossScore - piece.cost;
   const netScorePerTime = piece.time ? netScore / piece.time : netScore;
