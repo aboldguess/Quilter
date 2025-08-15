@@ -2,32 +2,39 @@
  Purchased Tiles Client Script
  -----------------------------
  Mini README:
- This script renders the list of tiles purchased during the current game and
- allows players to return a tile to the available pool if selected by mistake.
- Each piece is shown using its chosen color and the value it had when
- purchased, ensuring scores remain historically accurate.
+ This script renders tiles purchased during the current game and allows
+ players to return a tile to the available pool if selected by mistake. It
+ displays each tile's point value at the moment of purchase along with value
+ per time penalty metrics so scores remain historically accurate.
 
  Structure:
  - Load purchased tiles from localStorage
- - Display each tile's value at purchase time
- - Render table with shapes and a return button
+ - Display stored purchase-time value metrics
+ - Render table with shapes, metrics and a return button
+ - Dropdown to choose which metric column is visible on small screens
  - Navigation back to the main game interface
 */
 
 const AGE_COUNT = 9; // total number of paydays/ages
 let purchasedPieces = JSON.parse(localStorage.getItem('purchasedPieces') || '[]');
-// assign defaults to legacy pieces and compute missing purchase values
+// assign defaults to legacy pieces and compute missing purchase metrics
 purchasedPieces.forEach(p => {
   if (!p.color) p.color = '#4caf50';
-  // normalize legacy data to the new 1–9 age scale
   if (p.purchaseAge === undefined || p.purchaseAge < 1) p.purchaseAge = 1;
-  if (p.purchaseValue === undefined) p.purchaseValue = computeValue(p);
+  const stats = computeMetrics(p);
+  if (p.purchaseValue === undefined) p.purchaseValue = stats.value;
+  if (p.purchaseValuePerTime === undefined) p.purchaseValuePerTime = stats.valuePerTime;
+  if (p.purchaseValuePerTimePerArea === undefined) {
+    p.purchaseValuePerTimePerArea = stats.valuePerTimePerArea;
+  }
 });
 // persist any computed defaults
 savePurchased();
 
-const purchasedTableBody = document.querySelector('#purchasedTable tbody');
+const purchasedTable = document.getElementById('purchasedTable');
+const purchasedTableBody = purchasedTable.querySelector('tbody');
 const backBtn = document.getElementById('backBtn');
+const columnSelect = document.getElementById('columnSelect');
 
 function renderShape(shape, color = '#4caf50') {
   const container = document.createElement('div');
@@ -53,11 +60,13 @@ function savePurchased() {
   localStorage.setItem('purchasedPieces', JSON.stringify(purchasedPieces));
 }
 
-function computeValue(piece) {
+function computeMetrics(piece) {
   const area = piece.shape.length;
   const buttonPoints = piece.buttons * (AGE_COUNT - piece.purchaseAge);
-  const totalValue = area * 2 + buttonPoints;
-  return totalValue - piece.cost;
+  const value = piece.cost - area * 2 + buttonPoints;
+  const valuePerTime = piece.time ? value / piece.time : value;
+  const valuePerTimePerArea = piece.time && area ? value / (piece.time * area) : 0;
+  return { value, valuePerTime, valuePerTimePerArea };
 }
 
 function refreshTable() {
@@ -69,22 +78,20 @@ function refreshTable() {
     shapeTd.appendChild(renderShape(piece.shape, piece.color));
     tr.appendChild(shapeTd);
 
-    const buttonsTd = document.createElement('td');
-    buttonsTd.textContent = piece.buttons;
-    tr.appendChild(buttonsTd);
-
-    const costTd = document.createElement('td');
-    costTd.textContent = piece.cost;
-    tr.appendChild(costTd);
-
-    const timeTd = document.createElement('td');
-    timeTd.textContent = piece.time;
-    tr.appendChild(timeTd);
-
     const valueTd = document.createElement('td');
-    // display stored purchase-time value to reflect scoring at buy time
-    valueTd.textContent = piece.purchaseValue ?? computeValue(piece);
+    valueTd.classList.add('value');
+    valueTd.textContent = piece.purchaseValue;
     tr.appendChild(valueTd);
+
+    const vptTd = document.createElement('td');
+    vptTd.classList.add('valuePerTime');
+    vptTd.textContent = piece.purchaseValuePerTime.toFixed(2);
+    tr.appendChild(vptTd);
+
+    const vptaTd = document.createElement('td');
+    vptaTd.classList.add('valuePerTimePerArea');
+    vptaTd.textContent = piece.purchaseValuePerTimePerArea.toFixed(2);
+    tr.appendChild(vptaTd);
 
     const actionTd = document.createElement('td');
     const returnBtn = document.createElement('button');
@@ -104,6 +111,14 @@ function refreshTable() {
 backBtn.addEventListener('click', () => {
   window.location.href = 'index.html';
 });
+
+columnSelect.addEventListener('change', () => {
+  purchasedTable.classList.remove('show-value', 'show-valuePerTime', 'show-valuePerTimePerArea');
+  purchasedTable.classList.add('show-' + columnSelect.value);
+});
+
+// initialize dropdown selection
+columnSelect.dispatchEvent(new Event('change'));
 
 refreshTable();
 

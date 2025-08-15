@@ -7,7 +7,7 @@
 
  Structure:
  - General layout and typography
- - Table styling for pieces list
+ - Table styling for pieces and purchased lists
  - Grid styling for drawing new pieces
  - Responsive tweaks
 */
@@ -47,7 +47,7 @@ header {
   border-collapse: collapse;
 }
 
-#piecesTable th, #piecesTable td {
+#piecesTable th, #piecesTable td, #purchasedTable th, #purchasedTable td {
   border: 1px solid #ccc;
   padding: 0.5rem;
   text-align: center;
@@ -98,9 +98,45 @@ header {
   background: var(--active-color);
 }
 
+.column-select {
+  display: none;
+  margin-bottom: 1rem;
+}
+
+/* Purchased table defaults */
+#purchasedTable {
+  width: 100%;
+  border-collapse: collapse;
+}
+
 @media (max-width: 600px) {
-  #piecesTable th, #piecesTable td {
+  #piecesTable th, #piecesTable td,
+  #purchasedTable th, #purchasedTable td {
     font-size: 0.8rem;
     padding: 0.3rem;
+  }
+
+  .column-select {
+    display: block;
+  }
+
+  /* hide metric columns by default */
+  #purchasedTable th.value,
+  #purchasedTable th.valuePerTime,
+  #purchasedTable th.valuePerTimePerArea,
+  #purchasedTable td.value,
+  #purchasedTable td.valuePerTime,
+  #purchasedTable td.valuePerTimePerArea {
+    display: none;
+  }
+
+  /* show selected metric column */
+  #purchasedTable.show-value th.value,
+  #purchasedTable.show-value td.value,
+  #purchasedTable.show-valuePerTime th.valuePerTime,
+  #purchasedTable.show-valuePerTime td.valuePerTime,
+  #purchasedTable.show-valuePerTimePerArea th.valuePerTimePerArea,
+  #purchasedTable.show-valuePerTimePerArea td.valuePerTimePerArea {
+    display: table-cell;
   }
 }
