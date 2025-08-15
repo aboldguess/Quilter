@@ -24,7 +24,7 @@
 <body>
   <header>
     <h1>Patchwork Tile Helper</h1>
-    <p class="instructions">Select the current age, then add or buy tiles. Tap cells to draw shapes.</p>
+    <p class="instructions">Select the current age, then add or buy tiles. Tap cells to draw shapes. Use "New Game" to reset purchases.</p>
   </header>
   <section class="age-control">
     <label for="age">Current Age: <span id="ageDisplay">0</span></label>
@@ -32,6 +32,8 @@
   </section>
   <section class="piece-actions">
     <button id="addPieceBtn">Add Piece</button>
+    <button id="newGameBtn">New Game</button>
+    <button id="viewPurchasedBtn">View Purchased Tiles</button>
   </section>
   <section>
     <table id="piecesTable">
@@ -63,6 +65,6 @@
       <button id="cancelPiece">Cancel</button>
     </div>
   </section>
-  <script src="app.js"></script>
+  <script src="patchwork_client.js"></script>
 </body>
 </html>
