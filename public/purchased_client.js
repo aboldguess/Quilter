@@ -7,8 +7,8 @@
  displays each tile's gross and net scores at the moment of purchase along with
  efficiency metrics so scores remain historically accurate. Purchases record
  which player (yellow or green) bought the tile and a running score is
- maintained assuming each player starts with 162 points minus the sum of their
- purchased net values.
+ maintained by summing purchased net values and subtracting 162 to
+ calculate each player's final score.
 
  Structure:
  - Load purchased tiles from localStorage
@@ -138,8 +138,8 @@ function updateScores() {
   const greenTotal = purchasedPieces
     .filter(p => p.player === 'green')
     .reduce((sum, p) => sum + (p.purchaseNet || 0), 0);
-  yellowScoreEl.textContent = 162 - yellowTotal;
-  greenScoreEl.textContent = 162 - greenTotal;
+  yellowScoreEl.textContent = yellowTotal - 162;
+  greenScoreEl.textContent = greenTotal - 162;
 }
 
 backBtn.addEventListener('click', () => {
