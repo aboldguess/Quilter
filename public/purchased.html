@@ -3,12 +3,12 @@
   ------------------------------
   Mini README:
   This HTML page lists tiles that have been purchased in the current game.
-  It allows players to review their buys, see each tile's net value, and
-  optionally return a tile to the available pool.
+  It allows players to review their buys, see each tile's value at the time of
+  purchase, and optionally return a tile to the available pool.
 
   Structure:
   - Instructions header with navigation back to the game
-  - Table displaying purchased tiles and their values
+  - Table displaying purchased tiles and their purchase-time values
   - Script handling rendering and return actions
 -->
 <!DOCTYPE html>
@@ -22,7 +22,7 @@
 <body>
   <header>
     <h1>Purchased Tiles</h1>
-    <p class="instructions">These tiles have been bought this game. Use "Return" to undo a purchase.</p>
+    <p class="instructions">These tiles have been bought this game. Values reflect remaining paydays at purchase. Use "Return" to undo a purchase.</p>
     <button id="backBtn">Back to Game</button>
   </header>
   <section>
@@ -33,7 +33,7 @@
           <th>Buttons</th>
           <th>Cost</th>
           <th>Time</th>
-          <th>Value</th>
+          <th>Purchase Value</th>
           <th>Action</th>
         </tr>
       </thead>

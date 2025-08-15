@@ -4,23 +4,27 @@
  Mini README:
  This script renders the list of tiles purchased during the current game and
  allows players to return a tile to the available pool if selected by mistake.
- Each piece is shown using its chosen color and calculated net value.
+ Each piece is shown using its chosen color and the value it had when
+ purchased, ensuring scores remain historically accurate.
 
  Structure:
  - Load purchased tiles from localStorage
- - Compute and display each tile's net value
+ - Display each tile's value at purchase time
  - Render table with shapes and a return button
  - Navigation back to the main game interface
 */
 
 const AGE_COUNT = 9; // total number of paydays/ages
 let purchasedPieces = JSON.parse(localStorage.getItem('purchasedPieces') || '[]');
-// assign defaults to legacy pieces
+// assign defaults to legacy pieces and compute missing purchase values
 purchasedPieces.forEach(p => {
   if (!p.color) p.color = '#4caf50';
   // normalize legacy data to the new 1–9 age scale
   if (p.purchaseAge === undefined || p.purchaseAge < 1) p.purchaseAge = 1;
+  if (p.purchaseValue === undefined) p.purchaseValue = computeValue(p);
 });
+// persist any computed defaults
+savePurchased();
 
 const purchasedTableBody = document.querySelector('#purchasedTable tbody');
 const backBtn = document.getElementById('backBtn');
@@ -78,7 +82,8 @@ function refreshTable() {
     tr.appendChild(timeTd);
 
     const valueTd = document.createElement('td');
-    valueTd.textContent = computeValue(piece);
+    // display stored purchase-time value to reflect scoring at buy time
+    valueTd.textContent = piece.purchaseValue ?? computeValue(piece);
     tr.appendChild(valueTd);
 
     const actionTd = document.createElement('td');

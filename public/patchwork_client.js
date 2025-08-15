@@ -4,9 +4,10 @@
  Mini README:
  This browser script powers the main Patchwork helper interface. It manages
  a persistent library of tiles, handles purchases during a game, and allows
- pieces to be created, colored, edited, or deleted. Piece value is calculated
- as 2 points per occupied square plus future button income across the
- remaining ages, minus the piece cost.
+ pieces to be created, colored, edited, or deleted. When a tile is bought its
+ value at that moment is stored so the purchased list can show historical
+ scores. Piece value is calculated as 2 points per occupied square plus
+ future button income across the remaining ages, minus the piece cost.
 
  Structure:
  - State management for library, available, and purchased tiles
@@ -28,6 +29,11 @@ purchasedPieces.forEach(p => {
   if (!p.color) p.color = '#4caf50';
   // normalize legacy data to the new 1–9 age scale
   if (p.purchaseAge === undefined || p.purchaseAge < 1) p.purchaseAge = 1;
+  // legacy records may not have stored value; compute it based on purchase age
+  if (p.purchaseValue === undefined) {
+    const stats = computeStats(p, p.purchaseAge);
+    p.purchaseValue = stats.value;
+  }
 });
 let availablePieces = pieceLibrary.filter(p => !purchasedPieces.some(pp => pp.id === p.id));
 let editingPieceId = null;
@@ -225,7 +231,13 @@ function refreshTable() {
       if (index >= 0) {
         console.debug('Purchasing piece', piece.id);
         const purchaseAge = currentAge;
-        const purchasedCopy = { ...availablePieces[index], purchaseAge };
+        // capture the piece's value at the moment of purchase so it never changes
+        const statsAtPurchase = computeStats(availablePieces[index], purchaseAge);
+        const purchasedCopy = {
+          ...availablePieces[index],
+          purchaseAge,
+          purchaseValue: statsAtPurchase.value
+        };
         purchasedPieces.push(purchasedCopy);
         availablePieces.splice(index, 1);
         savePurchased();
