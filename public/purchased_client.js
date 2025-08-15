@@ -4,17 +4,22 @@
  Mini README:
  This script renders the list of tiles purchased during the current game and
  allows players to return a tile to the available pool if selected by mistake.
- Each piece is shown using its chosen color.
+ Each piece is shown using its chosen color and calculated net value.
 
  Structure:
  - Load purchased tiles from localStorage
+ - Compute and display each tile's net value
  - Render table with shapes and a return button
  - Navigation back to the main game interface
 */
 
+const AGE_COUNT = 9; // total number of scoring ages
 let purchasedPieces = JSON.parse(localStorage.getItem('purchasedPieces') || '[]');
-// assign default color to legacy pieces
-purchasedPieces.forEach(p => { if (!p.color) p.color = '#4caf50'; });
+// assign defaults to legacy pieces
+purchasedPieces.forEach(p => {
+  if (!p.color) p.color = '#4caf50';
+  if (p.purchaseAge === undefined) p.purchaseAge = 0;
+});
 
 const purchasedTableBody = document.querySelector('#purchasedTable tbody');
 const backBtn = document.getElementById('backBtn');
@@ -43,6 +48,13 @@ function savePurchased() {
   localStorage.setItem('purchasedPieces', JSON.stringify(purchasedPieces));
 }
 
+function computeValue(piece) {
+  const area = piece.shape.length;
+  const buttonPoints = piece.buttons * (AGE_COUNT - piece.purchaseAge);
+  const totalValue = area * 2 + buttonPoints;
+  return totalValue - piece.cost;
+}
+
 function refreshTable() {
   purchasedTableBody.innerHTML = '';
   purchasedPieces.forEach(piece => {
@@ -63,6 +75,10 @@ function refreshTable() {
     const timeTd = document.createElement('td');
     timeTd.textContent = piece.time;
     tr.appendChild(timeTd);
+
+    const valueTd = document.createElement('td');
+    valueTd.textContent = computeValue(piece);
+    tr.appendChild(valueTd);
 
     const actionTd = document.createElement('td');
     const returnBtn = document.createElement('button');
