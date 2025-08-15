@@ -24,7 +24,7 @@
 <body>
   <header>
     <h1>Patchwork Tile Helper</h1>
-    <p class="instructions">Select the current age, then add or buy tiles. Tap cells to draw shapes. Use "New Game" to reset purchases.</p>
+    <p class="instructions">Select the current age, then add or buy tiles. Tap cells to draw shapes and choose a color. Use "New Game" to reset purchases.</p>
   </header>
   <section class="age-control">
     <label for="age">Current Age: <span id="ageDisplay">0</span></label>
@@ -59,6 +59,7 @@
       <label>Buttons: <input type="number" id="buttonsInput" min="0" value="0" /></label>
       <label>Cost: <input type="number" id="costInput" min="0" value="0" /></label>
       <label>Time Penalty: <input type="number" id="timeInput" min="0" value="0" /></label>
+      <label>Color: <input type="color" id="colorInput" value="#4caf50" /></label>
     </div>
     <div class="form-actions">
       <button id="savePiece">Save</button>
