@@ -94,6 +94,7 @@ function refreshTable() {
     tr.appendChild(vptaTd);
 
     const actionTd = document.createElement('td');
+    actionTd.classList.add('action');
     const returnBtn = document.createElement('button');
     returnBtn.textContent = 'Return';
     returnBtn.addEventListener('click', () => {

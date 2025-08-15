@@ -120,13 +120,18 @@ header {
     display: block;
   }
 
-  /* hide metric columns by default */
+  /* hide metric and action columns by default on narrow screens */
   #purchasedTable th.value,
   #purchasedTable th.valuePerTime,
   #purchasedTable th.valuePerTimePerArea,
   #purchasedTable td.value,
   #purchasedTable td.valuePerTime,
   #purchasedTable td.valuePerTimePerArea {
+    display: none;
+  }
+
+  #purchasedTable th.action,
+  #purchasedTable td.action {
     display: none;
   }
 
