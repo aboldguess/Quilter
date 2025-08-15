@@ -6,7 +6,8 @@ This repository contains a mobile-friendly web application for evaluating Patchw
 - Responsive interface designed for phones
 - Slider to set the current game age
 - Draw shapes on a 5×5 grid and assign buttons, cost, and time penalty
-- Calculates points per cost, points per cost per area, and net points
+ - Calculates points per cost, points per cost per area, and net points using
+   2 points per covered square plus button income for the remaining nine ages
 - Persistent piece library with edit and delete options
 - Purchased tiles move to a separate page and reappear after starting a new game
 - Server uses Express with Helmet and Pino for security and logging

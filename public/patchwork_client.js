@@ -13,6 +13,7 @@
 */
 
 const TOTAL_TIME = 53; // total time spaces in Patchwork
+const INCOME_SPACES = [5, 11, 17, 23, 29, 35, 41, 47, 53]; // board spaces that grant button income
 let currentAge = 0;
 let nextId = parseInt(localStorage.getItem('nextId'), 10) || 1;
 let pieceLibrary = JSON.parse(localStorage.getItem('pieceLibrary') || '[]');
@@ -95,10 +96,17 @@ function renderShape(shape) {
 }
 
 function computeStats(piece) {
+  // Each patch square is worth two points. Buttons generate income at every
+  // remaining "age" (button space) on the time track after purchase. The
+  // piece's overall value is therefore:
+  //   (area * 2) + (buttons * remaining ages) - cost
   const area = piece.shape.length;
-  const pointsPerCost = piece.cost ? piece.buttons / piece.cost : piece.buttons;
-  const pointsPerCostPerArea = piece.cost && area ? piece.buttons / (piece.cost * area) : 0;
-  const netPoints = piece.buttons - piece.cost;
+  const squarePoints = area * 2;
+  const incomesRemaining = INCOME_SPACES.filter(s => s > currentAge).length;
+  const buttonPoints = piece.buttons * incomesRemaining;
+  const netPoints = squarePoints + buttonPoints - piece.cost;
+  const pointsPerCost = piece.cost ? netPoints / piece.cost : netPoints;
+  const pointsPerCostPerArea = piece.cost && area ? netPoints / (piece.cost * area) : 0;
   const remaining = TOTAL_TIME - currentAge - piece.time;
   const valid = remaining >= 0;
   return { area, pointsPerCost, pointsPerCostPerArea, netPoints, valid };
