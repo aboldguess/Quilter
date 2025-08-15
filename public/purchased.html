@@ -5,7 +5,8 @@
   This HTML page lists tiles that have been purchased in the current game. It
   shows the gross and net scores each tile had when bought along with
   efficiency metrics and optionally lets players return a tile to the available
-  pool.
+  pool. Running scores are computed by summing purchased net values and
+  subtracting 162 to produce each player's final score.
 
   Structure:
   - Instructions header with navigation back to the game
@@ -25,12 +26,12 @@
 <body>
   <header>
     <h1>Purchased Tiles</h1>
-    <p class="instructions">These tiles have been bought this game. Scores reflect remaining paydays at purchase. Use "Return" to undo a purchase. Running scores show remaining points (162 minus the sum of purchased net values).</p>
+    <p class="instructions">These tiles have been bought this game. Scores reflect remaining paydays at purchase. Use "Return" to undo a purchase. Running scores show final points (sum of purchased net values minus 162).</p>
     <button id="backBtn">Back to Game</button>
   </header>
   <section id="scoreBoard">
-    <p>Yellow Player Score: <span id="yellowScore" class="yellow">162</span></p>
-    <p>Green Player Score: <span id="greenScore" class="green">162</span></p>
+    <p>Yellow Player Score: <span id="yellowScore" class="yellow">-162</span></p>
+    <p>Green Player Score: <span id="greenScore" class="green">-162</span></p>
   </section>
   <section>
     <div class="column-select">

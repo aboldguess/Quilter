@@ -11,7 +11,7 @@ This repository contains a mobile-friendly web application for evaluating Patchw
 - Persistent piece library with edit and delete options
 - Purchased tiles move to a separate page and reappear after starting a new game
 - Purchased page displays purchase-time gross/net scores and efficiency metrics with a mobile-friendly column selector
-- Track yellow and green player purchases with dedicated buy buttons and running scores (162 minus purchased net values)
+- Track yellow and green player purchases with dedicated buy buttons and running scores (sum of purchased net values minus 162)
 - Sortable table to order pieces by any stat
 - Server uses Express with Helmet and Pino for security and logging
 - Configurable host/port and production mode
