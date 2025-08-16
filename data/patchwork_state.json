@@ -1,6 +1,0 @@
-{
-  "_comment": "Mini README: Persistent server-side state for Patchwork. Stores nextId, pieceLibrary, and purchasedPieces. Auto-generated and updated by the server.",
-  "nextId": 1,
-  "pieceLibrary": [],
-  "purchasedPieces": []
-}

@@ -11,7 +11,8 @@
  * - Sets up Express with Helmet for basic security headers and a permissive
  *   cross-origin resource policy so CSS/JS load when accessed via IP, plus Pino
  *   for logging.
- * - Maintains a shared piece/purchase state on disk for all clients.
+ * - Persists shared piece and purchase state in a SQLite database so all
+ *   clients see the same information across sessions.
  * - Exposes `/api/state` for clients to read and update this state,
  *   including buttons on hand for each player and the 7-point bonus holder.
  * - Serves static files from the "public" directory.
@@ -24,13 +25,13 @@
  *   NODE_ENV=production node patchwork_server.js
  */
 
-const fs = require('fs');
 const path = require('path');
 const express = require('express');
 const helmet = require('helmet');
 const pino = require('pino');
 const pinoHttp = require('pino-http');
 require('dotenv').config();
+const { getState, saveState } = require('./patchwork_database');
 
 const logger = pino({
   level: process.env.NODE_ENV === 'production' ? 'info' : 'debug'
@@ -89,53 +90,35 @@ app.use(pinoHttp({ logger }));
 app.use(express.json({ limit: '100kb' }));
 
 // --- Persistent game state handling ---------------------------------------
-// Load existing state from disk or initialise defaults if the file is absent.
-// State tracks piece data, purchased history, buttons on hand and which
-// player (if any) earned the 7-point bonus.
-const dataDir = path.join(__dirname, 'data');
-const stateFile = path.join(dataDir, 'patchwork_state.json');
-let state;
-try {
-  const raw = fs.readFileSync(stateFile, 'utf8');
-  state = JSON.parse(raw);
-  logger.debug('Loaded persisted state from disk');
-  if (state.yellowButtons === undefined) state.yellowButtons = 0;
-  if (state.greenButtons === undefined) state.greenButtons = 0;
-  if (!state.bonusWinner) state.bonusWinner = 'none';
-} catch (err) {
-  logger.warn('No existing state, creating default');
-  state = {
-    nextId: 1,
-    pieceLibrary: [],
-    purchasedPieces: [],
-    yellowButtons: 0,
-    greenButtons: 0,
-    bonusWinner: 'none'
-  };
-  fs.mkdirSync(dataDir, { recursive: true });
-  fs.writeFileSync(stateFile, JSON.stringify(state, null, 2));
-}
+// State is persisted in a SQLite database via the patchwork_database module.
+// Clients can optionally specify a game id via the `gameId` query parameter or
+// JSON body field to maintain separate games. Absent a value, game 1 is used.
 
-// Expose REST endpoints for clients to fetch and update the shared state.
 app.get('/api/state', (req, res) => {
-  res.json(state);
+  const gameId = parseInt(req.query.gameId, 10) || 1;
+  try {
+    res.json(getState(gameId));
+  } catch (err) {
+    logger.error({ err }, 'Failed to load state');
+    res.status(500).json({ error: 'Failed to load state' });
+  }
 });
 
 app.post('/api/state', (req, res) => {
   if (req.body && typeof req.body === 'object') {
-    state = {
-      nextId: req.body.nextId || 1,
-      pieceLibrary: req.body.pieceLibrary || [],
-      purchasedPieces: req.body.purchasedPieces || [],
-      yellowButtons: req.body.yellowButtons || 0,
-      greenButtons: req.body.greenButtons || 0,
-      bonusWinner: req.body.bonusWinner || 'none'
-    };
+    const gameId = parseInt(req.query.gameId || req.body.gameId, 10) || 1;
     try {
-      fs.writeFileSync(stateFile, JSON.stringify(state, null, 2));
+      saveState(gameId, {
+        nextId: req.body.nextId || 1,
+        pieceLibrary: req.body.pieceLibrary || [],
+        purchasedPieces: req.body.purchasedPieces || [],
+        yellowButtons: req.body.yellowButtons || 0,
+        greenButtons: req.body.greenButtons || 0,
+        bonusWinner: req.body.bonusWinner || 'none'
+      });
       res.json({ status: 'ok' });
     } catch (err) {
-      logger.error({ err }, 'Failed to write state to disk');
+      logger.error({ err }, 'Failed to persist state');
       res.status(500).json({ error: 'Failed to persist state' });
     }
   } else {

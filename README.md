@@ -20,15 +20,16 @@ This repository contains a mobile-friendly web application for evaluating Patchw
 - Configurable host/port and production mode
 
 ## Server-side Persistence
-State is shared across all clients and stored on the server.
+State is shared across all clients and stored in a SQLite database.
 
-- The server writes `data/patchwork_state.json`, creating it on first run.
+- The server creates `data/patchwork.db` on first run.
 - `GET /api/state` returns the current `nextId`, `pieceLibrary`,
   `purchasedPieces`, `yellowButtons`, `greenButtons` and `bonusWinner`.
-- `POST /api/state` accepts a JSON body with the same fields and persists it to
-  disk.
+- `POST /api/state` accepts a JSON body with the same fields and saves them to
+  the database. A `gameId` query or body value can be supplied to maintain
+  separate games; the default is game `1`.
 
-Deleting the JSON file resets the application to a clean slate on the next
+Removing the database file resets the application to a clean slate on the next
 server start.
 
 ## Setup
