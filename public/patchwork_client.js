@@ -19,6 +19,7 @@
  - Event listeners for CRUD actions and game flow
   - Column sorting for the pieces table
   - Per-player purchase buttons (yellow and green)
+ - Navigation uses absolute paths for compatibility when accessed via IP
 */
 
 const AGE_COUNT = 9; // number of paydays/ages in the game
@@ -406,7 +407,7 @@ newGameBtn.addEventListener(tapEvent, () => {
 });
 
 viewPurchasedBtn.addEventListener(tapEvent, () => {
-  window.location.href = 'purchased.html';
+  window.location.href = '/purchased.html';
 });
 
 // initialize application once the server state has loaded

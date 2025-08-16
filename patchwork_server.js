@@ -8,7 +8,9 @@
  *
  * Structure:
  * - Loads environment variables and command line arguments for configuration.
- * - Sets up Express with Helmet for basic security headers and Pino for logging.
+ * - Sets up Express with Helmet for basic security headers and a permissive
+ *   cross-origin resource policy so CSS/JS load when accessed via IP, plus Pino
+ *   for logging.
  * - Maintains a shared piece/purchase state on disk for all clients.
  * - Exposes `/api/state` for clients to read and update this state.
  * - Serves static files from the "public" directory.
@@ -79,7 +81,9 @@ for (let i = 0; i < args.length; i += 1) {
 logger.debug(`Resolved configuration host=${host} port=${port}`);
 
 const app = express();
-app.use(helmet());
+// Allow assets to load when the site is accessed via its network IP by
+// permitting cross-origin resource sharing for static files.
+app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
 app.use(pinoHttp({ logger }));
 app.use(express.json({ limit: '100kb' }));
 
