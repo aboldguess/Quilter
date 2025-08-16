@@ -16,11 +16,12 @@
  Structure:
  - State management for library, available, and purchased tiles
  - Grid rendering utilities and stats calculations
- - Event listeners for CRUD actions and game flow
+  - Event listeners for CRUD actions and game flow
+  - Export/import of the piece library as JSON files
   - Column sorting for the pieces table
   - Per-player purchase buttons (yellow and green)
   - Navigation uses absolute paths for compatibility when accessed via IP
- - Slider controls for buttons, cost, and movement values when creating pieces
+  - Slider controls for buttons, cost, and movement values when creating pieces
 */
 
 const AGE_COUNT = 9; // number of paydays/ages in the game
@@ -81,6 +82,55 @@ function saveState() {
 function saveLibrary() { saveState(); }
 function savePurchased() { saveState(); }
 
+// Export the current piece library as a downloadable JSON file
+function exportLibrary() {
+  try {
+    const data = JSON.stringify(pieceLibrary, null, 2);
+    const blob = new Blob([data], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `patchwork_library_${Date.now()}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    console.debug('Exported library with', pieceLibrary.length, 'pieces');
+  } catch (err) {
+    console.error('Failed to export library', err);
+  }
+}
+
+// Import a library JSON file chosen by the user
+function importLibraryFile(file) {
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (Array.isArray(data)) {
+        pieceLibrary = data.map(p => ({ ...p }));
+        availablePieces = pieceLibrary.filter(
+          p => !purchasedPieces.some(pp => pp.id === p.id)
+        );
+        const maxId = pieceLibrary.reduce(
+          (max, p) => (p.id && p.id > max ? p.id : max),
+          0
+        );
+        nextId = maxId + 1;
+        saveLibrary();
+        refreshTable();
+        console.debug('Imported library with', pieceLibrary.length, 'pieces');
+      } else {
+        alert('Import file must contain a JSON array of pieces.');
+      }
+    } catch (err) {
+      console.error('Failed to import library', err);
+      alert('Failed to import library: invalid JSON.');
+    }
+  };
+  reader.readAsText(file);
+}
+
 const ageInput = document.getElementById('age');
 const ageDisplay = document.getElementById('ageDisplay');
 const piecesTableBody = document.querySelector('#piecesTable tbody');
@@ -99,6 +149,9 @@ const costDisplay = document.getElementById('costDisplay');
 const movementDisplay = document.getElementById('movementDisplay');
 const savePieceBtn = document.getElementById('savePiece');
 const cancelPieceBtn = document.getElementById('cancelPiece');
+const exportBtn = document.getElementById('exportBtn');
+const importBtn = document.getElementById('importBtn');
+const importInput = document.getElementById('importInput');
 
 // Use a pointer-friendly event for taps/clicks so mobile devices respond
 // immediately without relying solely on the delayed "click" synthesis.
@@ -431,6 +484,22 @@ newGameBtn.addEventListener(tapEvent, () => {
 
 viewPurchasedBtn.addEventListener(tapEvent, () => {
   window.location.href = '/purchased.html';
+});
+
+exportBtn.addEventListener(tapEvent, () => {
+  exportLibrary();
+});
+
+importBtn.addEventListener(tapEvent, () => {
+  importInput.click();
+});
+
+importInput.addEventListener('change', ev => {
+  const file = ev.target.files && ev.target.files[0];
+  if (file) {
+    importLibraryFile(file);
+  }
+  ev.target.value = '';
 });
 
 // initialize application once the server state has loaded
