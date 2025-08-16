@@ -39,7 +39,14 @@ let port = parseInt(process.env.PORT || process.env.npm_config_port, 10);
 if (Number.isNaN(port)) {
   port = 3000;
 }
-let host = process.env.HOST || process.env.npm_config_host || '0.0.0.0';
+// Host resolution needs to guard against NPM's run-script behaviour where
+// specifying `--host` without an equals sign results in `npm_config_host=true`.
+// Treat "true"/"false" as unset so we can fall back to a sensible default.
+let hostEnv = process.env.HOST || process.env.npm_config_host;
+let host = hostEnv && hostEnv !== 'true' && hostEnv !== 'false'
+  ? hostEnv
+  : '0.0.0.0';
+
 const args = process.argv.slice(2);
 for (let i = 0; i < args.length; i += 1) {
   const arg = args[i];
@@ -62,6 +69,9 @@ for (let i = 0; i < args.length; i += 1) {
   } else if (/^\d+$/.test(arg)) {
     // Support bare numeric argument from `npm start --port 4000`
     port = parseInt(arg, 10);
+  } else if (!arg.startsWith('--')) {
+    // Allow unflagged host argument from `npm run dev --port 4000 --host 0.0.0.0`
+    host = arg;
   }
 }
 
