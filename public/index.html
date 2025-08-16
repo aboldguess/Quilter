@@ -12,6 +12,7 @@
   - Button to open the "Add Piece" form
   - Table listing all available pieces with current score metrics (sortable by headers) and buy buttons for each player
   - Hidden modal-like form for drawing a new piece
+  - Slider controls for buttons, cost and movement when adding a piece
   - Asset links use absolute paths so the UI works when accessed via network IP
 -->
 <!DOCTYPE html>
@@ -25,7 +26,7 @@
 <body>
   <header>
     <h1>Patchwork Tile Helper</h1>
-    <p class="instructions">Select the current payday, then add tiles. Use the yellow or green "Buy" buttons to record who purchased a tile. Tap cells to draw shapes and choose a color. Use "New Game" to reset purchases. Tap column headers to sort pieces.</p>
+    <p class="instructions">Select the current payday, then add tiles. Use the sliders to set buttons (0–3), cost (0–10) and movement (0–6). Use the yellow or green "Buy" buttons to record who purchased a tile. Tap cells to draw shapes and choose a color. Use "New Game" to reset purchases. Tap column headers to sort pieces.</p>
   </header>
   <section class="age-control">
     <label for="age">Current Payday: <span id="ageDisplay">1</span></label>
@@ -55,9 +56,18 @@
     <h2>New Piece</h2>
     <div id="grid" class="grid"></div>
     <div class="form-fields">
-      <label>Buttons: <input type="number" id="buttonsInput" min="0" value="0" /></label>
-      <label>Cost: <input type="number" id="costInput" min="0" value="0" /></label>
-      <label>Time Penalty: <input type="number" id="timeInput" min="0" value="0" /></label>
+      <label>Buttons:
+        <input type="range" id="buttonsInput" min="0" max="3" step="1" value="0" />
+        <span id="buttonsDisplay">0</span>
+      </label>
+      <label>Cost:
+        <input type="range" id="costInput" min="0" max="10" step="1" value="0" />
+        <span id="costDisplay">0</span>
+      </label>
+      <label>Movement:
+        <input type="range" id="movementInput" min="0" max="6" step="1" value="0" />
+        <span id="movementDisplay">0</span>
+      </label>
       <label>Color: <input type="color" id="colorInput" value="#4caf50" /></label>
     </div>
     <div class="form-actions">
