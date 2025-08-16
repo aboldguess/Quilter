@@ -19,7 +19,8 @@
  - Event listeners for CRUD actions and game flow
   - Column sorting for the pieces table
   - Per-player purchase buttons (yellow and green)
- - Navigation uses absolute paths for compatibility when accessed via IP
+  - Navigation uses absolute paths for compatibility when accessed via IP
+ - Slider controls for buttons, cost, and movement values when creating pieces
 */
 
 const AGE_COUNT = 9; // number of paydays/ages in the game
@@ -91,8 +92,11 @@ const pieceForm = document.getElementById('pieceForm');
 const grid = document.getElementById('grid');
 const buttonsInput = document.getElementById('buttonsInput');
 const costInput = document.getElementById('costInput');
-const timeInput = document.getElementById('timeInput');
+const movementInput = document.getElementById('movementInput');
 const colorInput = document.getElementById('colorInput');
+const buttonsDisplay = document.getElementById('buttonsDisplay');
+const costDisplay = document.getElementById('costDisplay');
+const movementDisplay = document.getElementById('movementDisplay');
 const savePieceBtn = document.getElementById('savePiece');
 const cancelPieceBtn = document.getElementById('cancelPiece');
 
@@ -103,6 +107,19 @@ const tapEvent = window.PointerEvent ? 'pointerup' : 'click';
 // initialize age slider display
 ageInput.value = currentAge;
 ageDisplay.textContent = currentAge;
+buttonsDisplay.textContent = buttonsInput.value;
+costDisplay.textContent = costInput.value;
+movementDisplay.textContent = movementInput.value;
+
+buttonsInput.addEventListener('input', () => {
+  buttonsDisplay.textContent = buttonsInput.value;
+});
+costInput.addEventListener('input', () => {
+  costDisplay.textContent = costInput.value;
+});
+movementInput.addEventListener('input', () => {
+  movementDisplay.textContent = movementInput.value;
+});
 
 // Track which column is sorted and direction
 let sortState = { key: null, asc: true };
@@ -313,8 +330,11 @@ function refreshTable() {
       editingPieceId = piece.id;
       buttonsInput.value = piece.buttons;
       costInput.value = piece.cost;
-      timeInput.value = piece.time;
+      movementInput.value = piece.time;
       colorInput.value = piece.color || '#4caf50';
+      buttonsDisplay.textContent = buttonsInput.value;
+      costDisplay.textContent = costInput.value;
+      movementDisplay.textContent = movementInput.value;
       loadShapeIntoGrid(piece.shape);
       pieceForm.classList.remove('hidden');
     });
@@ -353,7 +373,10 @@ addPieceBtn.addEventListener(tapEvent, () => {
   createGrid();
   buttonsInput.value = 0;
   costInput.value = 0;
-  timeInput.value = 0;
+  movementInput.value = 0;
+  buttonsDisplay.textContent = '0';
+  costDisplay.textContent = '0';
+  movementDisplay.textContent = '0';
 });
 
 savePieceBtn.addEventListener(tapEvent, () => {
@@ -368,7 +391,7 @@ savePieceBtn.addEventListener(tapEvent, () => {
       piece.shape = shape;
       piece.buttons = parseInt(buttonsInput.value, 10) || 0;
       piece.cost = parseInt(costInput.value, 10) || 0;
-      piece.time = parseInt(timeInput.value, 10) || 0;
+      piece.time = parseInt(movementInput.value, 10) || 0;
       piece.color = colorInput.value;
     }
     const avail = availablePieces.find(p => p.id === editingPieceId);
@@ -382,7 +405,7 @@ savePieceBtn.addEventListener(tapEvent, () => {
       shape,
       buttons: parseInt(buttonsInput.value, 10) || 0,
       cost: parseInt(costInput.value, 10) || 0,
-      time: parseInt(timeInput.value, 10) || 0,
+      time: parseInt(movementInput.value, 10) || 0,
       color: colorInput.value
     };
     console.debug('Adding piece', piece);
