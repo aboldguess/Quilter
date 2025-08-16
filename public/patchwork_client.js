@@ -154,12 +154,15 @@ for (let index = 0; index < headerCells.length; index += 1) {
       ev.preventDefault();
       cell.classList.toggle('active');
     };
-    // Use pointer events when available; fall back to click+touch with proper
-    // prevention so taps on mobile devices only toggle once.
+    // Use pointer events when available. Otherwise choose touch or click
+    // explicitly so that taps on mobile devices do not trigger both touch and
+    // synthetic click events (which previously cancelled each other out and
+    // made the grid seem non‑functional on phones).
     if (window.PointerEvent) {
       cell.addEventListener('pointerdown', toggle);
-    } else {
+    } else if ('ontouchstart' in window) {
       cell.addEventListener('touchstart', toggle, { passive: false });
+    } else {
       cell.addEventListener('click', toggle);
     }
     grid.appendChild(cell);
