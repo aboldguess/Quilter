@@ -1,4 +1,14 @@
+# Quilter .gitignore
+# This file defines patterns for files Git should ignore.
+# Ignoring these files prevents accidental commits of dependencies, environment settings,
+# temporary data, and local Patchwork state.
+#
+# Entries:
+# node_modules           - Installed npm packages
+# .env                   - Local environment variables
+# /tmp                   - Application temp directory
+# patchwork_state.json   - Generated Patchwork state file
 node_modules
 .env
 /tmp
-
+patchwork_state.json
