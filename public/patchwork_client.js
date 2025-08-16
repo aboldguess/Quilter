@@ -10,7 +10,8 @@
  individual scores can be calculated. Table evaluations display the same scoring
  formulas used at purchase time—gross score is twice the area plus remaining
  payday button income, net score subtracts the cost, and efficiency metrics
- divide by time penalty and area as applicable.
+ divide by time penalty and area as applicable. State is saved to the server so
+ multiple clients share a common library and purchase history.
 
  Structure:
  - State management for library, available, and purchased tiles
@@ -24,28 +25,59 @@ const AGE_COUNT = 9; // number of paydays/ages in the game
 
 // currentAge is 1-based representing the payday marker on the board
 let currentAge = 1;
-let nextId = parseInt(localStorage.getItem('nextId'), 10) || 1;
-let pieceLibrary = JSON.parse(localStorage.getItem('pieceLibrary') || '[]');
-let purchasedPieces = JSON.parse(localStorage.getItem('purchasedPieces') || '[]');
-// ensure legacy pieces get defaults
-pieceLibrary.forEach(p => { if (!p.color) p.color = '#4caf50'; });
-purchasedPieces.forEach(p => {
-  if (!p.color) p.color = '#4caf50';
-  // normalize legacy data to the new 1–9 age scale
-  if (p.purchaseAge === undefined || p.purchaseAge < 1) p.purchaseAge = 1;
-  // legacy records may not track which player purchased the tile
-  if (!p.player) p.player = 'unknown';
-  // legacy records may not have stored purchase-time metrics; compute them
-  const stats = computeScoreStats(p, p.purchaseAge);
-  if (p.purchaseGross === undefined) p.purchaseGross = stats.grossScore;
-  if (p.purchaseNet === undefined) p.purchaseNet = stats.netScore;
-  if (p.purchaseNetPerTime === undefined) p.purchaseNetPerTime = stats.netScorePerTime;
-  if (p.purchaseNetPerTimePerArea === undefined) {
-    p.purchaseNetPerTimePerArea = stats.netScorePerTimePerArea;
-  }
-});
-let availablePieces = pieceLibrary.filter(p => !purchasedPieces.some(pp => pp.id === p.id));
+let nextId = 1;
+let pieceLibrary = [];
+let purchasedPieces = [];
+let availablePieces = [];
 let editingPieceId = null;
+
+// Fetch persisted state from the server and apply defaults
+async function loadState() {
+  try {
+    const res = await fetch('/api/state');
+    if (res.ok) {
+      const state = await res.json();
+      nextId = state.nextId || 1;
+      pieceLibrary = state.pieceLibrary || [];
+      purchasedPieces = state.purchasedPieces || [];
+      // ensure legacy pieces get defaults
+      pieceLibrary.forEach(p => { if (!p.color) p.color = '#4caf50'; });
+      purchasedPieces.forEach(p => {
+        if (!p.color) p.color = '#4caf50';
+        if (p.purchaseAge === undefined || p.purchaseAge < 1) p.purchaseAge = 1;
+        if (!p.player) p.player = 'unknown';
+        const stats = computeScoreStats(p, p.purchaseAge);
+        if (p.purchaseGross === undefined) p.purchaseGross = stats.grossScore;
+        if (p.purchaseNet === undefined) p.purchaseNet = stats.netScore;
+        if (p.purchaseNetPerTime === undefined) {
+          p.purchaseNetPerTime = stats.netScorePerTime;
+        }
+        if (p.purchaseNetPerTimePerArea === undefined) {
+          p.purchaseNetPerTimePerArea = stats.netScorePerTimePerArea;
+        }
+      });
+      availablePieces = pieceLibrary.filter(
+        p => !purchasedPieces.some(pp => pp.id === p.id)
+      );
+      saveState(); // persist any computed defaults
+      refreshTable();
+    }
+  } catch (err) {
+    console.error('Failed to load state from server', err);
+  }
+}
+
+// Persist current state back to the server
+function saveState() {
+  fetch('/api/state', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ nextId, pieceLibrary, purchasedPieces })
+  }).catch(err => console.error('Failed to save state', err));
+}
+
+function saveLibrary() { saveState(); }
+function savePurchased() { saveState(); }
 
 const ageInput = document.getElementById('age');
 const ageDisplay = document.getElementById('ageDisplay');
@@ -112,16 +144,7 @@ for (let index = 0; index < headerCells.length; index += 1) {
   });
 }
 
-function saveLibrary() {
-  localStorage.setItem('pieceLibrary', JSON.stringify(pieceLibrary));
-  localStorage.setItem('nextId', String(nextId));
-}
-
-function savePurchased() {
-  localStorage.setItem('purchasedPieces', JSON.stringify(purchasedPieces));
-}
-
-function createGrid() {
+  function createGrid() {
   grid.innerHTML = '';
   // apply current color selection to grid cells
   grid.style.setProperty('--active-color', colorInput.value);
@@ -383,10 +406,12 @@ viewPurchasedBtn.addEventListener(tapEvent, () => {
   window.location.href = 'purchased.html';
 });
 
-// initialize
-createGrid();
-refreshTable();
-// persist any defaulted data to storage
-saveLibrary();
-savePurchased();
+// initialize application once the server state has loaded
+async function init() {
+  await loadState();
+  createGrid();
+  refreshTable();
+}
+
+init();
 

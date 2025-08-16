@@ -9,6 +9,8 @@
  * Structure:
  * - Loads environment variables and command line arguments for configuration.
  * - Sets up Express with Helmet for basic security headers and Pino for logging.
+ * - Maintains a shared piece/purchase state on disk for all clients.
+ * - Exposes `/api/state` for clients to read and update this state.
  * - Serves static files from the "public" directory.
  * - Starts the HTTP server on the requested host and port.
  *
@@ -19,6 +21,7 @@
  *   NODE_ENV=production node patchwork_server.js
  */
 
+const fs = require('fs');
 const path = require('path');
 const express = require('express');
 const helmet = require('helmet');
@@ -68,6 +71,47 @@ logger.debug(`Resolved configuration host=${host} port=${port}`);
 const app = express();
 app.use(helmet());
 app.use(pinoHttp({ logger }));
+app.use(express.json({ limit: '100kb' }));
+
+// --- Persistent game state handling ---------------------------------------
+// Load existing state from disk or initialise defaults if the file is absent.
+const dataDir = path.join(__dirname, 'data');
+const stateFile = path.join(dataDir, 'patchwork_state.json');
+let state;
+try {
+  const raw = fs.readFileSync(stateFile, 'utf8');
+  state = JSON.parse(raw);
+  logger.debug('Loaded persisted state from disk');
+} catch (err) {
+  logger.warn('No existing state, creating default');
+  state = { nextId: 1, pieceLibrary: [], purchasedPieces: [] };
+  fs.mkdirSync(dataDir, { recursive: true });
+  fs.writeFileSync(stateFile, JSON.stringify(state, null, 2));
+}
+
+// Expose REST endpoints for clients to fetch and update the shared state.
+app.get('/api/state', (req, res) => {
+  res.json(state);
+});
+
+app.post('/api/state', (req, res) => {
+  if (req.body && typeof req.body === 'object') {
+    state = {
+      nextId: req.body.nextId || 1,
+      pieceLibrary: req.body.pieceLibrary || [],
+      purchasedPieces: req.body.purchasedPieces || []
+    };
+    try {
+      fs.writeFileSync(stateFile, JSON.stringify(state, null, 2));
+      res.json({ status: 'ok' });
+    } catch (err) {
+      logger.error({ err }, 'Failed to write state to disk');
+      res.status(500).json({ error: 'Failed to persist state' });
+    }
+  } else {
+    res.status(400).json({ error: 'Invalid state payload' });
+  }
+});
 
 app.use(express.static(path.join(__dirname, 'public')));
 
