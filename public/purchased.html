@@ -5,12 +5,15 @@
   This HTML page lists tiles that have been purchased in the current game. It
   shows the gross and net scores each tile had when bought along with
   efficiency metrics and optionally lets players return a tile to the available
-  pool. Running scores are computed by summing purchased net values and
-  subtracting 162 to produce each player's final score.
+  pool. Players can also record buttons on hand for yellow and green and
+  choose who receives the 7-point bonus. Running scores combine purchased net
+  values, buttons on hand and any bonus, then subtract 162 to produce each
+  player's final score.
 
   Structure:
   - Instructions header with navigation back to the game
-  - Running score display for yellow and green players
+  - Running score display for yellow and green players with inputs for
+    buttons on hand and the 7-point bonus
   - Optional dropdown to choose visible metric on small screens
   - Table displaying purchase-time score metrics with a player column
   - Script handling rendering and return actions (action column hidden on small screens)
@@ -27,12 +30,22 @@
 <body>
   <header>
     <h1>Purchased Tiles</h1>
-    <p class="instructions">These tiles have been bought this game. Scores reflect remaining paydays at purchase. Use "Return" to undo a purchase. Running scores show final points (sum of purchased net values minus 162).</p>
+    <p class="instructions">These tiles have been bought this game. Scores reflect remaining paydays at purchase. Use "Return" to undo a purchase. Record buttons on hand and the 7-point bonus below; running scores update automatically.</p>
     <button id="backBtn" type="button">Back to Game</button>
   </header>
   <section id="scoreBoard">
     <p>Yellow Player Score: <span id="yellowScore" class="yellow">-162</span></p>
+    <label for="yellowButtons">Yellow Buttons on Hand:</label>
+    <input type="number" id="yellowButtons" min="0" value="0" />
     <p>Green Player Score: <span id="greenScore" class="green">-162</span></p>
+    <label for="greenButtons">Green Buttons on Hand:</label>
+    <input type="number" id="greenButtons" min="0" value="0" />
+    <fieldset>
+      <legend>7-Point Bonus</legend>
+      <label><input type="radio" name="bonus" id="bonusNone" value="none" checked />None</label>
+      <label><input type="radio" name="bonus" id="bonusYellow" value="yellow" />Yellow</label>
+      <label><input type="radio" name="bonus" id="bonusGreen" value="green" />Green</label>
+    </fieldset>
   </section>
   <section>
     <div class="column-select">

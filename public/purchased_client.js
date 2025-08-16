@@ -7,15 +7,18 @@
  displays each tile's gross and net scores at the moment of purchase along with
  efficiency metrics so scores remain historically accurate. Purchases record
  which player (yellow or green) bought the tile and a running score is
- maintained by summing purchased net values and subtracting 162 to
- calculate each player's final score. Data is loaded from and saved to the
- server so all clients show the same purchase history.
+ maintained by summing purchased net values. Players can also record buttons
+ on hand and who earned the 7-point bonus; these values are added to the
+ totals before subtracting 162 to calculate each player's final score. Data is
+ loaded from and saved to the server so all clients show the same purchase
+ history.
 
  Structure:
  - Load purchased tiles from the server
  - Display stored purchase-time score metrics
-- Render table with shapes, metrics and a return button
+ - Render table with shapes, metrics and a return button
   - Show running scores for yellow and green players
+  - Inputs for buttons on hand and the 7-point bonus
 - Dropdown to choose which metric column is visible on small screens
 - Navigation back to the main game interface
  - Navigation uses absolute paths for compatibility when served via IP
@@ -25,6 +28,9 @@ const AGE_COUNT = 9; // total number of paydays/ages
 let nextId = 1;
 let pieceLibrary = [];
 let purchasedPieces = [];
+let yellowButtons = 0;
+let greenButtons = 0;
+let bonusWinner = 'none';
 
 // Retrieve state from the server and ensure metrics are computed
 async function loadState() {
@@ -35,6 +41,9 @@ async function loadState() {
       nextId = state.nextId || 1;
       pieceLibrary = state.pieceLibrary || [];
       purchasedPieces = state.purchasedPieces || [];
+      yellowButtons = Number.isInteger(state.yellowButtons) ? state.yellowButtons : 0;
+      greenButtons = Number.isInteger(state.greenButtons) ? state.greenButtons : 0;
+      bonusWinner = state.bonusWinner || 'none';
       purchasedPieces.forEach(p => {
         if (!p.color) p.color = '#4caf50';
         if (p.purchaseAge === undefined || p.purchaseAge < 1) p.purchaseAge = 1;
@@ -49,6 +58,12 @@ async function loadState() {
           p.purchaseNetPerTimePerArea = stats.netScorePerTimePerArea;
         }
       });
+      // populate input controls with persisted values
+      yellowButtonsInput.value = yellowButtons;
+      greenButtonsInput.value = greenButtons;
+      bonusInputs.forEach(input => {
+        input.checked = input.value === bonusWinner;
+      });
       saveState(); // persist any computed defaults
       refreshTable();
     }
@@ -61,7 +76,14 @@ function saveState() {
   fetch('/api/state', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ nextId, pieceLibrary, purchasedPieces })
+    body: JSON.stringify({
+      nextId,
+      pieceLibrary,
+      purchasedPieces,
+      yellowButtons,
+      greenButtons,
+      bonusWinner
+    })
   }).catch(err => console.error('Failed to save state', err));
 }
 
@@ -73,6 +95,9 @@ const backBtn = document.getElementById('backBtn');
 const columnSelect = document.getElementById('columnSelect');
 const yellowScoreEl = document.getElementById('yellowScore');
 const greenScoreEl = document.getElementById('greenScore');
+const yellowButtonsInput = document.getElementById('yellowButtons');
+const greenButtonsInput = document.getElementById('greenButtons');
+const bonusInputs = document.querySelectorAll('input[name="bonus"]');
 
 // Normalise click/tap interactions for mobile devices.
 const tapEvent = window.PointerEvent ? 'pointerup' : 'click';
@@ -107,6 +132,11 @@ function computeMetrics(piece) {
   const netScorePerTime = piece.time ? netScore / piece.time : netScore;
   const netScorePerTimePerArea = piece.time && area ? netScore / (piece.time * area) : 0;
   return { grossScore, netScore, netScorePerTime, netScorePerTimePerArea };
+}
+
+function sanitizeButtons(value) {
+  const n = parseInt(value, 10);
+  return Number.isNaN(n) || n < 0 ? 0 : n;
 }
 
 function refreshTable() {
@@ -168,12 +198,36 @@ function updateScores() {
   const greenTotal = purchasedPieces
     .filter(p => p.player === 'green')
     .reduce((sum, p) => sum + (p.purchaseNet || 0), 0);
-  yellowScoreEl.textContent = yellowTotal - 162;
-  greenScoreEl.textContent = greenTotal - 162;
+  const yellowFinal = yellowTotal + yellowButtons + (bonusWinner === 'yellow' ? 7 : 0) - 162;
+  const greenFinal = greenTotal + greenButtons + (bonusWinner === 'green' ? 7 : 0) - 162;
+  yellowScoreEl.textContent = yellowFinal;
+  greenScoreEl.textContent = greenFinal;
 }
 
 backBtn.addEventListener(tapEvent, () => {
   window.location.href = '/';
+});
+
+yellowButtonsInput.addEventListener('change', () => {
+  yellowButtons = sanitizeButtons(yellowButtonsInput.value);
+  saveState();
+  updateScores();
+});
+
+greenButtonsInput.addEventListener('change', () => {
+  greenButtons = sanitizeButtons(greenButtonsInput.value);
+  saveState();
+  updateScores();
+});
+
+bonusInputs.forEach(input => {
+  input.addEventListener('change', () => {
+    if (input.checked) {
+      bonusWinner = input.value;
+      saveState();
+      updateScores();
+    }
+  });
 });
 
 columnSelect.addEventListener('change', () => {

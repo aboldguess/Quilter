@@ -12,7 +12,8 @@
  *   cross-origin resource policy so CSS/JS load when accessed via IP, plus Pino
  *   for logging.
  * - Maintains a shared piece/purchase state on disk for all clients.
- * - Exposes `/api/state` for clients to read and update this state.
+ * - Exposes `/api/state` for clients to read and update this state,
+ *   including buttons on hand for each player and the 7-point bonus holder.
  * - Serves static files from the "public" directory.
  * - Starts the HTTP server on the requested host and port.
  *
@@ -89,6 +90,8 @@ app.use(express.json({ limit: '100kb' }));
 
 // --- Persistent game state handling ---------------------------------------
 // Load existing state from disk or initialise defaults if the file is absent.
+// State tracks piece data, purchased history, buttons on hand and which
+// player (if any) earned the 7-point bonus.
 const dataDir = path.join(__dirname, 'data');
 const stateFile = path.join(dataDir, 'patchwork_state.json');
 let state;
@@ -96,9 +99,19 @@ try {
   const raw = fs.readFileSync(stateFile, 'utf8');
   state = JSON.parse(raw);
   logger.debug('Loaded persisted state from disk');
+  if (state.yellowButtons === undefined) state.yellowButtons = 0;
+  if (state.greenButtons === undefined) state.greenButtons = 0;
+  if (!state.bonusWinner) state.bonusWinner = 'none';
 } catch (err) {
   logger.warn('No existing state, creating default');
-  state = { nextId: 1, pieceLibrary: [], purchasedPieces: [] };
+  state = {
+    nextId: 1,
+    pieceLibrary: [],
+    purchasedPieces: [],
+    yellowButtons: 0,
+    greenButtons: 0,
+    bonusWinner: 'none'
+  };
   fs.mkdirSync(dataDir, { recursive: true });
   fs.writeFileSync(stateFile, JSON.stringify(state, null, 2));
 }
@@ -113,7 +126,10 @@ app.post('/api/state', (req, res) => {
     state = {
       nextId: req.body.nextId || 1,
       pieceLibrary: req.body.pieceLibrary || [],
-      purchasedPieces: req.body.purchasedPieces || []
+      purchasedPieces: req.body.purchasedPieces || [],
+      yellowButtons: req.body.yellowButtons || 0,
+      greenButtons: req.body.greenButtons || 0,
+      bonusWinner: req.body.bonusWinner || 'none'
     };
     try {
       fs.writeFileSync(stateFile, JSON.stringify(state, null, 2));
