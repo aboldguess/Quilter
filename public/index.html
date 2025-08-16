@@ -12,6 +12,7 @@
   - Button to open the "Add Piece" form
   - Table listing all available pieces with current score metrics (sortable by headers) and buy buttons for each player
   - Hidden modal-like form for drawing a new piece
+  - Asset links use absolute paths so the UI works when accessed via network IP
 -->
 <!DOCTYPE html>
 <html lang="en">
@@ -19,7 +20,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Patchwork Tile Helper</title>
-  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="/styles.css" />
 </head>
 <body>
   <header>
@@ -64,6 +65,6 @@
       <button id="cancelPiece" type="button">Cancel</button>
     </div>
   </section>
-  <script src="patchwork_client.js"></script>
+  <script src="/patchwork_client.js"></script>
 </body>
 </html>

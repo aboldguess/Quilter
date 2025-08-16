@@ -14,6 +14,7 @@
   - Optional dropdown to choose visible metric on small screens
   - Table displaying purchase-time score metrics with a player column
   - Script handling rendering and return actions (action column hidden on small screens)
+  - Asset links use absolute paths for reliability over network IPs
 -->
 <!DOCTYPE html>
 <html lang="en">
@@ -21,7 +22,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Purchased Tiles</title>
-  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="/styles.css" />
 </head>
 <body>
   <header>
@@ -58,6 +59,6 @@
       <tbody></tbody>
     </table>
   </section>
-  <script src="purchased_client.js"></script>
+  <script src="/purchased_client.js"></script>
 </body>
 </html>

@@ -14,10 +14,11 @@
  Structure:
  - Load purchased tiles from the server
  - Display stored purchase-time score metrics
- - Render table with shapes, metrics and a return button
+- Render table with shapes, metrics and a return button
   - Show running scores for yellow and green players
- - Dropdown to choose which metric column is visible on small screens
- - Navigation back to the main game interface
+- Dropdown to choose which metric column is visible on small screens
+- Navigation back to the main game interface
+ - Navigation uses absolute paths for compatibility when served via IP
 */
 
 const AGE_COUNT = 9; // total number of paydays/ages
@@ -172,7 +173,7 @@ function updateScores() {
 }
 
 backBtn.addEventListener(tapEvent, () => {
-  window.location.href = 'index.html';
+  window.location.href = '/';
 });
 
 columnSelect.addEventListener('change', () => {
