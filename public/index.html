@@ -9,10 +9,11 @@
   Structure:
   - Instructions header
   - Payday selection slider
-  - Button to open the "Add Piece" form
-  - Table listing all available pieces with current score metrics (sortable by headers) and buy buttons for each player
-  - Hidden modal-like form for drawing a new piece
-  - Slider controls for buttons, cost and movement when adding a piece
+    - Button to open the "Add Piece" form
+    - Buttons to export or import the piece library
+    - Table listing all available pieces with current score metrics (sortable by headers) and buy buttons for each player
+    - Hidden modal-like form for drawing a new piece
+    - Slider controls for buttons, cost and movement when adding a piece
   - Asset links use absolute paths so the UI works when accessed via network IP
 -->
 <!DOCTYPE html>
@@ -26,17 +27,20 @@
 <body>
   <header>
     <h1>Patchwork Tile Helper</h1>
-    <p class="instructions">Select the current payday, then add tiles. Use the sliders to set buttons (0–3), cost (0–10) and movement (0–6). Use the yellow or green "Buy" buttons to record who purchased a tile. Tap cells to draw shapes and choose a color. Use "New Game" to reset purchases. Tap column headers to sort pieces.</p>
+      <p class="instructions">Select the current payday, then add tiles. Use the sliders to set buttons (0–3), cost (0–10) and movement (0–6). Use the yellow or green "Buy" buttons to record who purchased a tile. Tap cells to draw shapes and choose a color. Use "Export Library" to download your pieces and "Import Library" to load a saved file. Use "New Game" to reset purchases. Tap column headers to sort pieces.</p>
   </header>
   <section class="age-control">
     <label for="age">Current Payday: <span id="ageDisplay">1</span></label>
     <input type="range" id="age" min="1" max="9" value="1" />
   </section>
-  <section class="piece-actions">
-    <button id="addPieceBtn" type="button">Add Piece</button>
-    <button id="newGameBtn" type="button">New Game</button>
-    <button id="viewPurchasedBtn" type="button">View Purchased Tiles</button>
-  </section>
+    <section class="piece-actions">
+      <button id="addPieceBtn" type="button">Add Piece</button>
+      <button id="newGameBtn" type="button">New Game</button>
+      <button id="viewPurchasedBtn" type="button">View Purchased Tiles</button>
+      <button id="exportBtn" type="button">Export Library</button>
+      <button id="importBtn" type="button">Import Library</button>
+      <input id="importInput" type="file" accept="application/json" class="hidden" />
+    </section>
   <section>
     <table id="piecesTable">
       <thead>

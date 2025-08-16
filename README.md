@@ -9,6 +9,7 @@ This repository contains a mobile-friendly web application for evaluating Patchw
 - Choose a color for each piece
 - Calculates gross score, net score, net score per time penalty, and net score per time penalty per area
 - Persistent piece library with edit and delete options
+- Export and import the piece library as JSON files
 - Purchased tiles move to a separate page and reappear after starting a new game
 - Purchased page displays purchase-time gross/net scores and efficiency metrics with a mobile-friendly column selector
 - Track yellow and green player purchases with dedicated buy buttons and running scores (sum of purchased net values minus 162)
@@ -55,6 +56,7 @@ npm start --port 8080 --host 0.0.0.0
 PORT=5000 HOST=0.0.0.0 npm start
 ```
 Then open `http://HOST:PORT` in a browser from any device on the network.
+Use the on-screen **Export Library** and **Import Library** buttons to back up or restore pieces.
 
 ## Debugging
 - Server logs are written to stdout using Pino.
