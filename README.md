@@ -17,6 +17,18 @@ This repository contains a mobile-friendly web application for evaluating Patchw
 - Server uses Express with Helmet and Pino for security and logging
 - Configurable host/port and production mode
 
+## Server-side Persistence
+State is shared across all clients and stored on the server.
+
+- The server writes `data/patchwork_state.json`, creating it on first run.
+- `GET /api/state` returns the current `nextId`, `pieceLibrary` and
+  `purchasedPieces`.
+- `POST /api/state` accepts a JSON body with the same fields and persists it
+  to disk.
+
+Deleting the JSON file resets the application to a clean slate on the next
+server start.
+
 ## Setup
 ### Linux / Raspberry Pi
 ```bash
