@@ -13,6 +13,7 @@ This repository contains a mobile-friendly web application for evaluating Patchw
 - Purchased page displays purchase-time gross/net scores and efficiency metrics with a mobile-friendly column selector
 - Track yellow and green player purchases with dedicated buy buttons and running scores (sum of purchased net values minus 162)
 - Sortable table to order pieces by any stat
+- Shared state stored server-side so multiple clients see the same tiles and purchases
 - Server uses Express with Helmet and Pino for security and logging
 - Configurable host/port and production mode
 

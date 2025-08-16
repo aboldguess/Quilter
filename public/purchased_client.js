@@ -8,10 +8,11 @@
  efficiency metrics so scores remain historically accurate. Purchases record
  which player (yellow or green) bought the tile and a running score is
  maintained by summing purchased net values and subtracting 162 to
- calculate each player's final score.
+ calculate each player's final score. Data is loaded from and saved to the
+ server so all clients show the same purchase history.
 
  Structure:
- - Load purchased tiles from localStorage
+ - Load purchased tiles from the server
  - Display stored purchase-time score metrics
  - Render table with shapes, metrics and a return button
   - Show running scores for yellow and green players
@@ -20,22 +21,50 @@
 */
 
 const AGE_COUNT = 9; // total number of paydays/ages
-let purchasedPieces = JSON.parse(localStorage.getItem('purchasedPieces') || '[]');
-// assign defaults to legacy pieces and compute missing purchase metrics
-purchasedPieces.forEach(p => {
-  if (!p.color) p.color = '#4caf50';
-  if (p.purchaseAge === undefined || p.purchaseAge < 1) p.purchaseAge = 1;
-  if (!p.player) p.player = 'unknown';
-  const stats = computeMetrics(p);
-  if (p.purchaseGross === undefined) p.purchaseGross = stats.grossScore;
-  if (p.purchaseNet === undefined) p.purchaseNet = stats.netScore;
-  if (p.purchaseNetPerTime === undefined) p.purchaseNetPerTime = stats.netScorePerTime;
-  if (p.purchaseNetPerTimePerArea === undefined) {
-    p.purchaseNetPerTimePerArea = stats.netScorePerTimePerArea;
+let nextId = 1;
+let pieceLibrary = [];
+let purchasedPieces = [];
+
+// Retrieve state from the server and ensure metrics are computed
+async function loadState() {
+  try {
+    const res = await fetch('/api/state');
+    if (res.ok) {
+      const state = await res.json();
+      nextId = state.nextId || 1;
+      pieceLibrary = state.pieceLibrary || [];
+      purchasedPieces = state.purchasedPieces || [];
+      purchasedPieces.forEach(p => {
+        if (!p.color) p.color = '#4caf50';
+        if (p.purchaseAge === undefined || p.purchaseAge < 1) p.purchaseAge = 1;
+        if (!p.player) p.player = 'unknown';
+        const stats = computeMetrics(p);
+        if (p.purchaseGross === undefined) p.purchaseGross = stats.grossScore;
+        if (p.purchaseNet === undefined) p.purchaseNet = stats.netScore;
+        if (p.purchaseNetPerTime === undefined) {
+          p.purchaseNetPerTime = stats.netScorePerTime;
+        }
+        if (p.purchaseNetPerTimePerArea === undefined) {
+          p.purchaseNetPerTimePerArea = stats.netScorePerTimePerArea;
+        }
+      });
+      saveState(); // persist any computed defaults
+      refreshTable();
+    }
+  } catch (err) {
+    console.error('Failed to load state from server', err);
   }
-});
-// persist any computed defaults
-savePurchased();
+}
+
+function saveState() {
+  fetch('/api/state', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ nextId, pieceLibrary, purchasedPieces })
+  }).catch(err => console.error('Failed to save state', err));
+}
+
+function savePurchased() { saveState(); }
 
 const purchasedTable = document.getElementById('purchasedTable');
 const purchasedTableBody = purchasedTable.querySelector('tbody');
@@ -62,10 +91,6 @@ function renderShape(shape, color = '#4caf50') {
     container.appendChild(cell);
   }
   return container;
-}
-
-function savePurchased() {
-  localStorage.setItem('purchasedPieces', JSON.stringify(purchasedPieces));
 }
 
 function computeMetrics(piece) {
@@ -151,8 +176,11 @@ columnSelect.addEventListener('change', () => {
   purchasedTable.classList.add('show-' + columnSelect.value);
 });
 
-// initialize dropdown selection
-columnSelect.dispatchEvent(new Event('change'));
+// initialize after loading server state
+async function init() {
+  await loadState();
+  columnSelect.dispatchEvent(new Event('change'));
+}
 
-refreshTable();
+init();
 
